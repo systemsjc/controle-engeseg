@@ -4,31 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engeseg Vigilância - Controle de Acessos</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Alpine.js CDN para reatividade -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen" 
       x-data="appPortaria()" 
       x-init="initApp()">
 
+    <!-- Header Principal -->
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-4">
                 <div class="flex items-center justify-center">
                     <img src="logo-engeseg.png" class="h-11 w-auto object-contain max-w-[150px]" alt="Logo Engeseg Vigilância">
@@ -38,23 +32,35 @@
                     <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Controle Operacional de Acesso</p>
                 </div>
             </div>
+            
+            <!-- Menu de Abas Alternáveis -->
+            <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-sm font-bold">
+                <button @click="abaAtiva = 'portaria'" :class="abaAtiva === 'portaria' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition">Portaria</button>
+                <button @click="abrirModoAdmin()" :class="abaAtiva === 'admin' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition flex items-center space-x-1">
+                    <span>🛡️ Admin</span>
+                </button>
+            </div>
+
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
                 <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado' : 'Conectando...'"></div>
-                <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3" x-text="horaAtual"></div>
+                <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- TELA DA PORTARIA -->
+    <main x-show="abaAtiva === 'portaria'" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6" x-transition>
         
+        <!-- COLUNA ESQUERDA: FORMULÁRIO DE ENTRADA -->
         <section class="lg:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl h-fit">
-            <h2 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
-                <span>Novo Registro</span>
-                <span class="text-xs font-normal text-slate-400">Guarita / Entrada</span>
-            </h2>
+            <div class="mb-4 border-b border-slate-700 pb-2">
+                <h2 class="text-lg font-bold text-white">Novo Registro</h2>
+                <span class="text-xs text-slate-400" x-text="cadastroAutoPreenchido ? '✨ Dados recuperados do histórico' : 'Guarita / Entrada'"></span>
+            </div>
 
             <form @submit.prevent="registrarEntrada()" class="space-y-4">
+                <!-- Seletor Rápido de Tipo -->
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Tipo de Fluxo</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -72,6 +78,7 @@
                     </div>
                 </div>
 
+                <!-- Grid de Inputs Rápidos: Placa e Destino -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Placa</label>
@@ -80,7 +87,7 @@
                             maxlength="7"
                             placeholder="ABC1D23"
                             x-model="formData.placa"
-                            @input="formData.placa = formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+                            @input="verificarPlacaExistente()"
                             class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-center text-lg font-mono font-bold tracking-widest text-white focus:outline-none focus:border-blue-500 uppercase placeholder-slate-600"
                             required
                         />
@@ -97,6 +104,7 @@
                     </div>
                 </div>
 
+                <!-- Dados Opcionais/Condicionais -->
                 <div class="space-y-3 pt-2 border-t border-slate-700/50">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
@@ -153,78 +161,122 @@
             </form>
         </section>
 
+        <!-- COLUNA DIREITA: VEÍCULOS NO PÁTIO (DASHBOARD) -->
         <section class="lg:col-span-8 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                 <h2 class="text-lg font-bold text-white flex items-center space-x-2">
                     <span>Veículos Internos</span>
-                    <span class="bg-slate-900 text-blue-400 text-xs px-2.5 py-0.5 rounded-full border border-slate-700 font-mono" x-text="veiculosInternos.length">
-                        0
-                    </span>
+                    <span class="bg-slate-900 text-blue-400 text-xs px-2.5 py-0.5 rounded-full border border-slate-700 font-mono" x-text="veiculosInternos.length">0</span>
                 </h2>
             </div>
 
+            <!-- Loading de Inicialização -->
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
                 <p class="text-sm">Sincronizando com o Firebase Cloud...</p>
             </div>
 
+            <!-- Estado Vazio -->
             <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20">
                 <p class="text-slate-500 font-medium">Nenhum veículo ativo no momento.</p>
                 <p class="text-xs text-slate-600 mt-1">Todos os fluxos de entrada foram liberados.</p>
             </div>
 
+            <!-- Grid de Cards Ativos -->
             <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
                 <template x-for="item in veiculosInternos" :key="item.id">
-                    <div :class="obterBordaCard(item)" 
-                         class="bg-slate-900/60 p-4 rounded-xl border-l-4 shadow-md flex justify-between items-start space-x-3 transition-all hover:bg-slate-900">
+                    <div :class="obterBordaCard(item)" class="bg-slate-900/60 p-4 rounded-xl border-l-4 shadow-md flex justify-between items-start space-x-3 transition-all hover:bg-slate-900">
                         <div class="space-y-1.5 flex-1 min-w-0">
                             <div class="flex items-center space-x-2">
-                                <span :class="obterBadgeEstilo(item.tipo_visitante)" 
-                                      class="text-[10px] font-black uppercase px-2 py-0.5 rounded font-sans tracking-wider"
-                                      x-text="item.tipo_visitante">
-                                </span>
-                                <span :class="obterCorTimer(item)" 
-                                      class="text-xs font-mono font-semibold bg-slate-800/80 px-1.5 py-0.5 rounded">
-                                    ⏱️ <span x-text="calcularPermanencia(item.data_entrada)"></span>
-                                </span>
+                                <span :class="obterBadgeEstilo(item.tipo_visitante)" class="text-[10px] font-black uppercase px-2 py-0.5 rounded font-sans tracking-wider" x-text="item.tipo_visitante"></span>
+                                <span :class="obterCorTimer(item)" class="text-xs font-mono font-semibold bg-slate-800/80 px-1.5 py-0.5 rounded">⏱️ <span x-text="calcularPermanencia(item.data_entrada)"></span></span>
                             </div>
                             
                             <p class="text-xl font-mono font-black text-white tracking-wider truncate" x-text="item.placa"></p>
 
                             <div class="text-xs space-y-0.5">
-                                <p class="text-slate-300 font-medium truncate">
-                                    <span class="text-slate-500">Destino:</span> <span x-text="item.destino"></span>
-                                </p>
-                                <p class="text-slate-400 truncate" x-show="item.veiculo_modelo">
-                                    <span class="text-slate-500">Veículo:</span> <span x-text="item.veiculo_modelo"></span>
-                                </p>
-                                <p class="text-slate-400 truncate" x-show="item.nome_condutor">
-                                    <span class="text-slate-500">Condutor:</span> <span x-text="item.nome_condutor"></span>
-                                </p>
-                                <p class="text-slate-500 italic truncate text-[11px]" x-show="item.observacoes">
-                                    "Obs: <span x-text="item.observacoes"></span>"
-                                </p>
+                                <p class="text-slate-300 font-medium truncate"><span class="text-slate-500">Destino:</span> <span x-text="item.destino"></span></p>
+                                <p class="text-slate-400 truncate" x-show="item.veiculo_modelo"><span class="text-slate-500">Veículo:</span> <span x-text="item.veiculo_modelo"></span></p>
+                                <p class="text-slate-400 truncate" x-show="item.nome_condutor"><span class="text-slate-500">Condutor:</span> <span x-text="item.nome_condutor"></span></p>
+                                <p class="text-slate-500 italic truncate text-[11px]" x-show="item.observacoes">"Obs: <span x-text="item.observacoes"></span>"</p>
                             </div>
                         </div>
 
-                        <button 
-                            @click="registrarSaida(item.id)"
-                            class="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-md shadow-emerald-950/20 self-center"
-                        >
-                            Liberar
-                        </button>
+                        <button @click="registrarSaida(item.id)" class="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-md shadow-emerald-950/20 self-center">Liberar</button>
                     </div>
                 </template>
             </div>
         </section>
-        
     </main>
 
+    <!-- MODO ADMINISTRADOR (HISTÓRICO E BANCO DE DADOS COMPLETO) -->
+    <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6" x-transition>
+        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-white uppercase tracking-wider">Histórico Geral de Acessos</h2>
+                    <p class="text-xs text-slate-400">Controle completo de auditoria interna da guarita</p>
+                </div>
+
+                <!-- Barra de Busca (Lupa) -->
+                <div class="relative w-full md:w-80">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">🔍</span>
+                    <input 
+                        type="text" 
+                        placeholder="Pesquisar por Placa, Nome ou Destino..." 
+                        x-model="buscaHistorico"
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white"
+                    />
+                </div>
+            </div>
+
+            <!-- Tabela de Auditoria -->
+            <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-900/40">
+                <table class="w-full text-sm text-left text-slate-300">
+                    <thead class="text-xs uppercase bg-slate-900 text-slate-400 font-bold tracking-wider border-b border-slate-700">
+                        <tr>
+                            <th class="px-4 py-3">Fluxo</th>
+                            <th class="px-4 py-3">Placa</th>
+                            <th class="px-4 py-3">Condutor / Veículo</th>
+                            <th class="px-4 py-3">Destino</th>
+                            <th class="px-4 py-3">Horário Entrada</th>
+                            <th class="px-4 py-3">Horário Saída</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="item in historicoFiltrado()" :key="item.id">
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                                <td class="px-4 py-3">
+                                    <span :class="obterBadgeEstilo(item.tipo_visitante)" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded" x-text="item.tipo_visitante"></span>
+                                </td>
+                                <td class="px-4 py-3 font-mono font-bold text-white tracking-wider" x-text="item.placa"></td>
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-slate-200" x-text="item.nome_condutor || 'Não informado'"></div>
+                                    <div class="text-xs text-slate-400" x-text="item.veiculo_modelo || '-'"></div>
+                                </td>
+                                <td class="px-4 py-3 text-slate-200" x-text="item.destino"></td>
+                                <td class="px-4 py-3 text-xs text-slate-400 font-mono" x-text="formatarData(item.data_entrada)"></td>
+                                <td class="px-4 py-3 text-xs font-mono">
+                                    <span x-show="item.data_saida" class="text-emerald-400" x-text="formatarData(item.data_saida)"></span>
+                                    <span x-show="!item.data_saida" class="text-amber-500 font-sans font-bold uppercase tracking-wide animate-pulse">Dentro</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div x-show="historicoGeral.length === 0" class="text-center py-10 text-slate-500 text-sm">
+                Nenhum registro encontrado no histórico.
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts do Firebase (Modulares) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Configurações extraídas da imagem enviada
         const firebaseConfig = {
             apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
             authDomain: "controle-engeseg.firebaseapp.com",
@@ -234,24 +286,27 @@
             appId: "1:999888889619:web:b65e8d88dec7743aef76e6"
         };
 
-        // Inicializar Firebase e Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Tornar referências disponíveis globalmente para o Alpine.js
         window.dbFirestore = db;
-        window.fsMethods = { collection, addDoc, updateDoc, doc, query, where, onSnapshot };
+        window.fsMethods = { collection, addDoc, updateDoc, doc, query, onSnapshot, getDocs };
     </script>
 
+    <!-- Script de Lógica com Alpine.js integrado ao Firebase -->
     <script>
         function appPortaria() {
             return {
                 horaAtual: '',
                 agora: new Date(),
+                abaAtiva: 'portaria',
+                buscaHistorico: '',
                 veiculosInternos: [],
+                historicoGeral: [],
                 carregandoInicial: true,
                 enviando: false,
                 realtimeAtivo: false,
+                cadastroAutoPreenchido: false,
                 formData: {
                     tipo_visitante: 'Motoboy',
                     nome_condutor: '',
@@ -266,12 +321,10 @@
                     this.atualizarRelogio();
                     setInterval(() => this.atualizarRelogio(), 1000);
                     
-                    // Aguarda o script assíncrono do Firebase carregar completamente
                     setTimeout(() => {
                         this.conectarEouvirFirebase();
-                    }, 600);
+                    }, 800);
 
-                    // Sincroniza a reatividade de contadores de tempo a cada 30 segundos
                     setInterval(() => {
                         this.agora = new Date();
                     }, 30000);
@@ -283,54 +336,100 @@
                 },
 
                 conectarEouvirFirebase() {
-                    const { collection, query, where, onSnapshot } = window.fsMethods;
+                    if (!window.fsMethods) return;
+                    const { collection, query, onSnapshot } = window.fsMethods;
                     const db = window.dbFirestore;
 
-                    // Query otimizada para rodar sem exigir a criação de índices compostos manuais
-                    const q = query(
-                        collection(db, "controle_acesso"), 
-                        where("data_saida", "==", null)
-                    );
+                    try {
+                        const q = query(collection(db, "controle_acesso"));
 
-                    onSnapshot(q, (snapshot) => {
-                        let registros = [];
-                        snapshot.forEach((doc) => {
-                            registros.push({ id: doc.id, ...doc.data() });
+                        onSnapshot(q, (snapshot) => {
+                            let internos = [];
+                            let geral = [];
+                            
+                            snapshot.forEach((doc) => {
+                                const item = { id: doc.id, ...doc.data() };
+                                geral.push(item);
+                                if (item.data_saida === null) {
+                                    internos.push(item);
+                                }
+                            });
+                            
+                            internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                            geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                            
+                            this.veiculosInternos = internos;
+                            this.historicoGeral = geral;
+                            this.carregandoInicial = false;
+                            this.realtimeAtivo = true;
+                        }, (error) => {
+                            console.error(error);
+                            this.realtimeAtivo = false;
                         });
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                verificarPlacaExistente() {
+                    this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    
+                    if (this.formData.placa.length >= 4) {
+                        const correspondencia = this.historicoGeral.find(item => item.placa === this.formData.placa);
                         
-                        // Ordenação local estável pelo pátio para não depender de índices remotos complexos
-                        registros.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        
-                        this.veiculosInternos = registros;
-                        this.carregandoInicial = false;
-                        this.realtimeAtivo = true;
-                    }, (error) => {
-                        console.error("Erro na conexão realtime do Firebase:", error);
-                        this.realtimeAtivo = false;
+                        if (correspondencia) {
+                            this.formData.nome_condutor = correspondencia.nome_condutor || '';
+                            this.formData.documento = correspondencia.documento || '';
+                            this.formData.veiculo_modelo = correspondencia.veiculo_modelo || '';
+                            this.cadastroAutoPreenchido = true;
+                            return;
+                        }
+                    }
+                    this.cadastroAutoPreenchido = false;
+                },
+
+                abrirModoAdmin() {
+                    const senha = prompt("Insira a senha de Administrador:");
+                    // Nova senha alterada com limpeza de espaços em branco (.trim())
+                    if (senha !== null && senha.trim() === "20Engeseg26") {
+                        this.abaAtiva = 'admin';
+                    } else if (senha !== null) {
+                        alert("Senha inválida! Acesso negado.");
+                    }
+                },
+
+                historicoFiltrado() {
+                    if (!this.buscaHistorico.trim()) return this.historicoGeral;
+                    const termo = this.buscaHistorico.toLowerCase().trim();
+                    return this.historicoGeral.filter(item => {
+                        return (item.placa && item.placa.toLowerCase().includes(termo)) ||
+                               (item.nome_condutor && item.nome_condutor.toLowerCase().includes(termo)) ||
+                               (item.destino && item.destino.toLowerCase().includes(termo));
                     });
                 },
 
                 async registrarEntrada() {
+                    if (this.enviando) return;
                     this.enviando = true;
+                    
                     const { collection, addDoc } = window.fsMethods;
                     const db = window.dbFirestore;
 
                     try {
                         const novoRegistro = {
-                            tipo_visitante: this.formData.tipo_visitante,
-                            nome_condutor: this.formData.nome_condutor || null,
-                            documento: this.formData.documento || null,
-                            placa: this.formData.placa,
-                            veiculo_modelo: this.formData.veiculo_modelo || null,
-                            destino: this.formData.destino,
-                            observacoes: this.formData.observacoes || null,
+                            tipo_visitante: this.formData.tipo_visitante || 'Motoboy',
+                            nome_condutor: this.formData.nome_condutor || '',
+                            documento: this.formData.documento || '',
+                            placa: this.formData.placa.toUpperCase().trim(),
+                            veiculo_modelo: this.formData.veiculo_modelo || '',
+                            destino: this.formData.destino || '',
+                            observacoes: this.formData.observacoes || '',
                             data_entrada: new Date().toISOString(),
                             data_saida: null
                         };
 
                         await addDoc(collection(db, "controle_acesso"), novoRegistro);
 
-                        // Reset parcial limpando apenas strings mutáveis
                         this.formData = {
                             tipo_visitante: this.formData.tipo_visitante,
                             nome_condutor: '',
@@ -340,8 +439,9 @@
                             destino: '',
                             observacoes: ''
                         };
+                        this.cadastroAutoPreenchido = false;
                     } catch (err) {
-                        alert('Erro ao processar entrada: ' + err.message);
+                        alert('Erro ao processar: ' + err.message);
                     } finally {
                         this.enviando = false;
                     }
@@ -357,8 +457,14 @@
                             data_saida: new Date().toISOString()
                         });
                     } catch (err) {
-                        alert('Erro ao processar liberação: ' + err.message);
+                        alert('Erro ao dar saída: ' + err.message);
                     }
+                },
+
+                formatarData(isoString) {
+                    if (!isoString) return '-';
+                    const d = new Date(isoString);
+                    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 },
 
                 calcularPermanencia(dataEntrada) {
@@ -367,9 +473,8 @@
                     const minutosTotais = Math.floor(diferencaMs / 60000);
                     
                     if (minutosTotais < 0) return '0 min';
-                    if (minutosTotais < 60) {
-                        return `${minutosTotais} min`;
-                    }
+                    if (minutosTotais < 60) return `${minutosTotais} min`;
+                    
                     const horas = Math.floor(minutosTotais / 60);
                     const mins = minutosTotais % 60;
                     return `${horas}h ${mins}m`;
