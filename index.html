@@ -6,7 +6,10 @@
     <title>Engeseg Vigilância - Controle de Acessos</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Alpine.js CDN para reatividade -->
+    <!-- Biblioteca oficial do Firebase (Versão Compat) via CDN - Carregamento Garantido -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Alpine.js CDN - Carregado por último para garantir que o Firebase já existe -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
@@ -72,6 +75,7 @@
                     <div class="grid grid-cols-3 gap-2">
                         <template x-for="tipo in ['Motoboy', 'Uber', 'Prestador']">
                             <button
+                                key="tipo"
                                 type="button"
                                 @click="formData.tipo_visitante = tipo"
                                 :class="formData.tipo_visitante === tipo 
@@ -160,10 +164,10 @@
                     type="submit"
                     :disabled="enviando || placaBloqueadaMsg"
                     :class="placaBloqueadaMsg ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'"
-                    class="w-full p-3 rounded-lg font-bold text-sm tracking-wide shadow-lg transition active:scale-[0.99] mt-2 flex justify-center items-center text-white"
+                    class="w-full p-3 rounded-lg font-bold text-sm tracking-wide shadow-lg transition active:scale-[0.99] mt-2 flex justify-center items-center text-white font-sans"
                 >
                     <span x-show="!enviando">Confirmar Entrada</span>
-                    <span x-show="enviando" class="animate-spin inline-block w-4 h-4 border-2 border-white border-b-transparent rounded-full"></span>
+                    <span x-show="enviando" class="animate-spin inline-block w-4 h-4 border-2 border-white border-b-transparent rounded-full" x-cloak></span>
                 </button>
             </form>
         </section>
@@ -212,7 +216,7 @@
     </main>
 
     <!-- MODO ADMINISTRADOR -->
-    <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition>
+    <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition x-cloak>
         
         <!-- SELETOR INTERNO DO ADMIN -->
         <div class="flex space-x-4 mb-4 border-b border-slate-700 pb-2">
@@ -281,7 +285,7 @@
         </section>
 
         <!-- SUB-ABA 2: RESTRIÇÕES DE ENTRADA -->
-        <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition>
+        <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition x-cloak>
             <!-- Form Bloqueio -->
             <div class="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 h-fit shadow-xl">
                 <h3 class="text-md font-bold text-white mb-3 uppercase tracking-wider text-rose-400">Bloquear Nova Placa</h3>
@@ -347,11 +351,9 @@
         </div>
     </footer>
 
-    <!-- Scripts do Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+    <!-- Script de Inicialização Direta do Firebase e Regras de Negócio do Alpine -->
+    <script>
+        // Configurações do Firebase extraídas da imagem
         const firebaseConfig = {
             apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
             authDomain: "controle-engeseg.firebaseapp.com",
@@ -361,15 +363,10 @@
             appId: "1:999888889619:web:b65e8d88dec7743aef76e6"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // Inicializa o Firebase Global usando a versão Compat (Garante funcionamento direto via script puro)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        window.dbFirestore = db;
-        window.fsMethods = { collection, addDoc, updateDoc, deleteDoc, doc, query, onSnapshot };
-    </script>
-
-    <!-- Script de Lógica Operacional -->
-    <script>
         function appPortaria() {
             return {
                 horaAtual: '',
@@ -392,8 +389,12 @@
                     this.atualizarRelogio();
                     setInterval(() => this.atualizarRelogio(), 1000);
                     
-                    setTimeout(() => { this.conectarEouvirFirebase(); }, 800);
-                    setInterval(() => { this.agora = new Date(); }, 30000);
+                    // Executa a conexão imediata com o banco de dados
+                    this.conectarEouvirFirebase();
+                    
+                    setInterval(() => {
+                        this.agora = new Date();
+                    }, 30000);
                 },
 
                 atualizarRelogio() {
@@ -402,37 +403,50 @@
                 },
 
                 conectarEouvirFirebase() {
-                    if (!window.fsMethods) return;
-                    const { collection, query, onSnapshot } = window.fsMethods;
-                    const db = window.dbFirestore;
-
                     try {
-                        onSnapshot(query(collection(db, "controle_acesso")), (snapshot) => {
-                            let internos = []; let geral = [];
+                        // Ouvir a coleção principal de registros de acesso em tempo real
+                        db.collection("controle_acesso").onSnapshot((snapshot) => {
+                            let internos = [];
+                            let geral = [];
                             snapshot.forEach((doc) => {
                                 const item = { id: doc.id, ...doc.data() };
                                 geral.push(item);
-                                if (item.data_saida === null) internos.push(item);
+                                if (item.data_saida === null) {
+                                    internos.push(item);
+                                }
                             });
                             internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
                             geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                            
                             this.veiculosInternos = internos;
                             this.historicoGeral = geral;
                             this.carregandoInicial = false;
                             this.realtimeAtivo = true;
+                        }, (error) => {
+                            console.error("Erro Realtime Acessos:", error);
+                            this.realtimeAtivo = false;
                         });
 
-                        onSnapshot(query(collection(db, "restricoes")), (snapshot) => {
+                        // Ouvir a coleção de placas com restrição de entrada
+                        db.collection("restricoes").onSnapshot((snapshot) => {
                             let bloqueios = [];
-                            snapshot.forEach((doc) => { bloqueios.push({ id: doc.id, ...doc.data() }); });
+                            snapshot.forEach((doc) => {
+                                bloqueios.push({ id: doc.id, ...doc.data() });
+                            });
                             this.listaNegra = bloqueios;
+                        }, (error) => {
+                            console.error("Erro Realtime Restrições:", error);
                         });
-                    } catch (e) { console.error(e); }
+
+                    } catch (e) {
+                        console.error("Falha ao instanciar listeners do Firebase:", e);
+                    }
                 },
 
                 verificarPlacaExistente() {
                     this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
                     
+                    // Verifica Lista Negra de Restrição
                     const bloqueioAtivo = this.listaNegra.find(item => item.placa === this.formData.placa);
                     if (bloqueioAtivo) {
                         this.placaBloqueadaMsg = bloqueioAtivo.motivo;
@@ -441,6 +455,7 @@
                         this.placaBloqueadaMsg = '';
                     }
 
+                    // Autopreenchimento Inteligente por histórico de dados anteriores
                     if (this.formData.placa.length >= 4) {
                         const correspondencia = this.historicoGeral.find(item => item.placa === this.formData.placa);
                         if (correspondencia) {
@@ -476,56 +491,67 @@
                 async registrarEntrada() {
                     if (this.enviando || this.placaBloqueadaMsg) return;
                     this.enviando = true;
-                    const { collection, addDoc } = window.fsMethods;
+
                     try {
-                        await addDoc(collection(window.dbFirestore, "controle_acesso"), {
+                        await db.collection("controle_acesso").add({
                             tipo_visitante: this.formData.tipo_visitante,
-                            nome_condutor: this.formData.nome_condutor,
-                            documento: this.formData.documento,
-                            placa: this.formData.placa,
-                            veiculo_modelo: this.formData.veiculo_modelo,
+                            nome_condutor: this.formData.nome_condutor || '',
+                            documento: this.formData.documento || '',
+                            placa: this.formData.placa.toUpperCase().trim(),
+                            veiculo_modelo: this.formData.veiculo_modelo || '',
                             destino: this.formData.destino,
-                            observacoes: this.formData.observacoes,
+                            observacoes: this.formData.observacoes || '',
                             data_entrada: new Date().toISOString(),
                             data_saida: null
                         });
+
                         this.formData = { tipo_visitante: this.formData.tipo_visitante, nome_condutor: '', documento: '', placa: '', veiculo_modelo: '', destino: '', observacoes: '' };
                         this.cadastroAutoPreenchido = false;
-                    } catch (err) { alert(err.message); } finally { this.enviando = false; }
+                    } catch (err) {
+                        alert('Erro ao registrar entrada no Firebase: ' + err.message);
+                    } finally {
+                        this.enviando = false;
+                    }
                 },
 
                 async registrarSaida(id) {
-                    const { doc, updateDoc } = window.fsMethods;
                     try {
-                        await updateDoc(doc(window.dbFirestore, "controle_acesso", id), { data_saida: new Date().toISOString() });
-                    } catch (err) { alert(err.message); }
+                        await db.collection("controle_acesso").doc(id).update({
+                            data_saida: new Date().toISOString()
+                        });
+                    } catch (err) {
+                        alert('Erro ao processar liberação: ' + err.message);
+                    }
                 },
 
                 async deletarRegistro(id) {
                     if (!confirm("Tem certeza que deseja apagar DEFINITIVAMENTE este cadastro do histórico?")) return;
-                    const { doc, deleteDoc } = window.fsMethods;
                     try {
-                        await deleteDoc(doc(window.dbFirestore, "controle_acesso", id));
-                    } catch (err) { alert(err.message); }
+                        await db.collection("controle_acesso").doc(id).delete();
+                    } catch (err) {
+                        alert('Erro ao excluir: ' + err.message);
+                    }
                 },
 
                 async adicionarRestricao() {
-                    const { collection, addDoc } = window.fsMethods;
                     try {
-                        await addDoc(collection(window.dbFirestore, "restricoes"), {
+                        await db.collection("restricoes").add({
                             placa: this.formBloqueio.placa.toUpperCase().trim(),
                             motivo: this.formBloqueio.motivo
                         });
                         this.formBloqueio = { placa: '', motivo: '' };
-                    } catch (err) { alert(err.message); }
+                    } catch (err) {
+                        alert('Erro ao aplicar restrição: ' + err.message);
+                    }
                 },
 
                 async removerRestricao(id) {
                     if (!confirm("Confirmar a liberação e exclusão da restrição desta placa?")) return;
-                    const { doc, deleteDoc } = window.fsMethods;
                     try {
-                        await deleteDoc(doc(window.dbFirestore, "restricoes", id));
-                    } catch (err) { alert(err.message); }
+                        await db.collection("restricoes").doc(id).delete();
+                    } catch (err) {
+                        alert('Erro ao liberar placa: ' + err.message);
+                    }
                 },
 
                 exportarDados(tipo) {
