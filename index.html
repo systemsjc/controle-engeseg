@@ -41,7 +41,7 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Desconectado'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Conectando...'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
@@ -362,8 +362,8 @@
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
                             const item = { id: doc.id, ...doc.data() };
-                            // Filtra o documento de teste inicial para não poluir a interface da guarita
-                            if (item.teste !== "123") {
+                            // CORREÇÃO CRÍTICA: Filtro inteligente tolerante a maiúsculas, minúsculas ou campos inexistentes
+                            if (!item.hasOwnProperty('Teste') && !item.hasOwnProperty('teste')) {
                                 geral.push(item);
                                 if (item.data_saida === null) internos.push(item);
                             }
@@ -438,6 +438,7 @@
                         data_saida: null
                     };
 
+                    // Limpeza imediata da interface visual (Garante velocidade no celular da guarita)
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
@@ -452,7 +453,7 @@
                         this.enviando = false;
                     })
                     .catch((err) => {
-                        this.erroValidacao = 'Erro ao salvar: ' + err.message;
+                        this.erroValidacao = 'Erro de rede: ' + err.message;
                         this.enviando = false;
                     });
                 },
