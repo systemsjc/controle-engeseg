@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engeseg Vigilância - Controle de Acessos</title>
+    <!-- Tailwind CSS v3 CDN - Estável -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Biblioteca oficial do Firebase (Versão Compat) via CDN -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
@@ -20,9 +23,11 @@
       x-data="appPortaria()" 
       x-init="initApp()">
 
+    <!-- Header Principal -->
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-4">
+                <!-- LOGO ENGESEG -->
                 <div class="flex items-center justify-center py-1">
                     <img src="logo-engeseg.png" class="h-16 w-auto object-contain max-w-[180px]" alt="Logo Engeseg Vigilância">
                 </div>
@@ -32,6 +37,7 @@
                 </div>
             </div>
             
+            <!-- Menu de Abas Alternáveis -->
             <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-sm font-bold">
                 <button @click="abaAtiva = 'portaria'" :class="abaAtiva === 'portaria' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition">Portaria</button>
                 <button @click="abrirModoAdmin()" :class="abaAtiva === 'admin' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition flex items-center space-x-1">
@@ -47,20 +53,24 @@
         </div>
     </header>
 
+    <!-- TELA DA PORTARIA -->
     <main x-show="abaAtiva === 'portaria'" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 w-full" x-transition>
         
+        <!-- COLUNA ESQUERDA: FORMULÁRIO -->
         <section :class="placaBloqueadaMsg ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-slate-700'" class="lg:col-span-4 bg-slate-800 p-5 rounded-xl border shadow-xl h-fit transition-all duration-300">
             <div class="mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-white">Novo Registro</h2>
                 <span class="text-xs text-slate-400" x-text="cadastroAutoPreenchido ? '✨ Dados recuperados do histórico' : 'Guarita / Entrada'"></span>
             </div>
 
+            <!-- Avisos Visuais na Interface -->
             <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-text="erroValidacao"></div>
             <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse">
                 ⚠️ <strong>ACESSO BLOQUEADO:</strong> <span x-text="placaBloqueadaMsg"></span>
             </div>
 
             <div class="space-y-4">
+                <!-- Seletor Rápido de Tipo -->
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Tipo de Fluxo</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -78,6 +88,7 @@
                     </div>
                 </div>
 
+                <!-- Grid de Inputs Placa e Destino -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Placa</label>
@@ -103,6 +114,7 @@
                     </div>
                 </div>
 
+                <!-- Dados Opcionais -->
                 <div class="space-y-3 pt-2 border-t border-slate-700/50">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
@@ -161,6 +173,7 @@
             </div>
         </section>
 
+        <!-- COLUNA DIREITA: VEÍCULOS NO PÁTIO -->
         <section class="lg:col-span-8 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                 <h2 class="text-lg font-bold text-white flex items-center space-x-2">
@@ -203,12 +216,14 @@
         </section>
     </main>
 
+    <!-- MODO ADMINISTRADOR -->
     <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition x-cloak>
         <div class="flex space-x-4 mb-4 border-b border-slate-700 pb-2">
             <button @click="subAbaAdmin = 'historico'" :class="subAbaAdmin === 'historico' ? 'text-blue-400 border-b-2 border-blue-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">📋 Histórico de Auditoria</button>
             <button @click="subAbaAdmin = 'restricoes'" :class="subAbaAdmin === 'restricoes' ? 'text-rose-400 border-b-2 border-rose-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">🚫 Restrições de Entrada (<span x-text="listaNegra.length">0</span>)</button>
         </div>
 
+        <!-- SUB-ABA HISTÓRICO GERAL -->
         <section x-show="subAbaAdmin === 'historico'" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
@@ -264,6 +279,7 @@
             </div>
         </section>
 
+        <!-- SUB-ABA RESTRIÇÕES DE ENTRADA -->
         <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition x-cloak>
             <div class="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 h-fit shadow-xl">
                 <h3 class="text-md font-bold text-white mb-3 uppercase tracking-wider text-rose-400">Bloquear Nova Placa</h3>
@@ -308,6 +324,7 @@
         </section>
     </main>
 
+    <!-- RODAPÉ DE CRÉDITOS -->
     <footer class="bg-slate-800 border-t border-slate-700 py-3.5 px-6 shadow-xl mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-2 font-medium tracking-wide">
             <div class="flex items-center space-x-1.5">
@@ -326,6 +343,7 @@
         </div>
     </footer>
 
+    <!-- Script de Inicialização Direta do Firebase Sincronizado Puro -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
@@ -362,8 +380,8 @@
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
                             const item = { id: doc.id, ...doc.data() };
-                            // CORREÇÃO CRÍTICA DO TRAVAMENTO: Filtro totalmente tolerante e à prova de falhas de digitação no Firebase
-                            if (!item.hasOwnProperty('Teste') && !item.hasOwnProperty('teste') && item.hasOwnProperty('placa')) {
+                            // PROTEÇÃO MÁXIMA: Filtra e aceita apenas pacotes reais que possuem placa e data válidas
+                            if (item && item.placa && item.data_entrada) {
                                 geral.push(item);
                                 if (item.data_saida === null) internos.push(item);
                             }
@@ -438,7 +456,7 @@
                         data_saida: null
                     };
 
-                    // Limpeza reativa e imediata dos campos da tela (Destrava o botão no exato clique)
+                    // Reseta os campos visuais instantaneamente para liberar o próximo atendimento
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
@@ -453,7 +471,7 @@
                         this.enviando = false;
                     })
                     .catch((err) => {
-                        this.erroValidacao = 'Erro de rede: ' + err.message;
+                        this.erroValidacao = 'Erro ao salvar: ' + err.message;
                         this.enviando = false;
                     });
                 },
