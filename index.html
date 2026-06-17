@@ -41,8 +41,8 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Conectando...'"></div>
+                <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-amber-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Modo Backup Local'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
@@ -172,7 +172,7 @@
 
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500 flex-1 flex flex-col justify-center items-center">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
-                <p class="text-sm">Sincronizando com o Firebase Cloud...</p>
+                <p class="text-sm">Sincronizando banco de dados...</p>
             </div>
 
             <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center" x-cloak>
@@ -337,8 +337,19 @@
             appId: "1:999888889619:web:b65e8d88dec7743aef76e6"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db = null;
+        let isFirebaseOk = false;
+
+        // Tenta iniciar o Firebase de forma segura. Se falhar, o app não congela.
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                isFirebaseOk = true;
+            }
+        } catch (e) {
+            console.warn("Falha crítica de CDN. Mudando para modo local.", e);
+        }
 
         function appPortaria() {
             return {
@@ -359,31 +370,44 @@
                 atualizarRelogio() { this.horaAtual = new Date().toLocaleTimeString('pt-BR'); },
 
                 carregarDados() {
-                    db.collection("controle_acesso").onSnapshot((snapshot) => {
-                        let internos = []; let geral = [];
-                        snapshot.forEach((doc) => {
-                            const item = { id: doc.id, ...doc.data() };
-                            geral.push(item);
-                            if (item.data_saida === null) internos.push(item);
+                    if (isFirebaseOk && db) {
+                        // Ouvinte Cloud ativo e seguro
+                        db.collection("controle_acesso").onSnapshot((snapshot) => {
+                            let internos = []; let geral = [];
+                            snapshot.forEach((doc) => {
+                                const item = { id: doc.id, ...doc.data() };
+                                geral.push(item);
+                                if (item.data_saida === null) internos.push(item);
+                            });
+                            this.renderizarListas(internos, geral, true);
+                        }, (err) => {
+                            this.carregarModoLocalFallback();
                         });
-                        internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        this.veiculosInternos = internos;
-                        this.historicoGeral = geral;
-                        this.carregandoInicial = false;
-                        this.realtimeAtivo = true;
-                    }, (err) => { 
-                        console.error("Falha ao sincronizar acessos:", err);
-                        this.realtimeAtivo = false; 
-                    });
 
-                    db.collection("restricoes").onSnapshot((snapshot) => {
-                        let bloqueios = [];
-                        snapshot.forEach((doc) => { bloqueios.push({ id: doc.id, ...doc.data() }); });
-                        this.listaNegra = bloqueios;
-                    }, (err) => {
-                        console.error("Falha ao sincronizar restrições:", err);
-                    });
+                        db.collection("restricoes").onSnapshot((snapshot) => {
+                            let bloqueios = [];
+                            snapshot.forEach((doc) => { bloqueios.push({ id: doc.id, ...doc.data() }); });
+                            this.listaNegra = bloqueios;
+                        });
+                    } else {
+                        this.carregarModoLocalFallback();
+                    }
+                },
+
+                carregarModoLocalFallback() {
+                    const locais = JSON.parse(localStorage.getItem('engeseg_acessos_bkp') || '[]');
+                    const internos = locais.filter(i => i.data_saida === null);
+                    this.listaNegra = JSON.parse(localStorage.getItem('engeseg_restricoes_bkp') || '[]');
+                    this.renderizarListas(internos, locais, false);
+                },
+
+                renderizarListas(internos, geral, statusNuvem) {
+                    internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                    geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                    this.veiculosInternos = internos;
+                    this.historicoGeral = geral;
+                    this.carregandoInicial = false;
+                    this.realtimeAtivo = statusNuvem;
                 },
 
                 verificarPlacaExistente() {
@@ -392,19 +416,14 @@
                         this.cadastroAutoPreenchido = false;
                         return;
                     }
-
                     this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
                     
-                    // Valida restrição de placa com tratamento seguro para dados nulos
                     const bloqueioAtivo = this.listaNegra.find(item => item && item.placa === this.formData.placa);
                     if (bloqueioAtivo) {
-                        this.placaBloqueadaMsg = bloqueioAtivo.motivo || 'Acesso Restrito';
+                        this.placaBloqueadaMsg = bloqueioAtivo.motivo || 'Restrito';
                         return;
-                    } else { 
-                        this.placaBloqueadaMsg = ''; 
-                    }
+                    } else { this.placaBloqueadaMsg = ''; }
 
-                    // Autopreenchimento inteligente por histórico protegido contra listas vazias
                     if (this.formData.placa.length >= 4 && this.historicoGeral.length > 0) {
                         const correspondencia = this.historicoGeral.find(item => item && item.placa === this.formData.placa);
                         if (correspondencia) {
@@ -422,7 +441,6 @@
                     this.tentouEnviar = true;
                     this.erroValidacao = '';
 
-                    // Validação de interface
                     if (!this.formData.placa || !this.formData.destino) {
                         this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios para confirmar a entrada.";
                         return;
@@ -435,60 +453,88 @@
                     
                     this.enviando = true;
 
-                    try {
-                        const payload = {
-                            tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
-                            nome_condutor: String(this.formData.nome_condutor || ''),
-                            documento: String(this.formData.documento || ''),
-                            placa: String(this.formData.placa).toUpperCase().trim(),
-                            veiculo_modelo: String(this.formData.veiculo_modelo || ''),
-                            destino: String(this.formData.destino || ''),
-                            observacoes: String(this.formData.observacoes || ''),
-                            data_entrada: new Date().toISOString(),
-                            data_saida: null
-                        };
+                    const payload = {
+                        tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
+                        nome_condutor: String(this.formData.nome_condutor || ''),
+                        documento: String(this.formData.documento || ''),
+                        placa: String(this.formData.placa).toUpperCase().trim(),
+                        veiculo_modelo: String(this.formData.veiculo_modelo || ''),
+                        destino: String(this.formData.destino || ''),
+                        observacoes: String(this.formData.observacoes || ''),
+                        data_entrada: new Date().toISOString(),
+                        data_saida: null
+                    };
 
-                        await db.collection("controle_acesso").add(payload);
-
-                        // Reset assíncrono seguro e imediato do formulário
-                        this.formData.nome_condutor = '';
-                        this.formData.documento = '';
-                        this.formData.placa = '';
-                        this.formData.veiculo_modelo = '';
-                        this.formData.destino = '';
-                        this.formData.observacoes = '';
-                        
-                        this.cadastroAutoPreenchido = false;
-                        this.tentouEnviar = false;
-                    } catch (err) {
-                        this.erroValidacao = 'Erro de gravação: ' + err.message;
-                    } finally {
-                        this.enviando = false;
+                    if (this.realtimeAtivo && db) {
+                        try {
+                            await db.collection("controle_acesso").add(payload);
+                        } catch (err) {
+                            this.salvarLocalFallbackData(payload);
+                        }
+                    } else {
+                        this.salvarLocalFallbackData(payload);
                     }
+
+                    // Força a limpeza e desbloqueio imediato da tela
+                    this.formData = { tipo_visitante: this.formData.tipo_visitante, nome_condutor: '', documento: '', placa: '', veiculo_modelo: '', destino: '', observacoes: '' };
+                    this.cadastroAutoPreenchido = false;
+                    this.tentouEnviar = false;
+                    this.enviando = false;
+                },
+
+                salvarLocalFallbackData(item) {
+                    item.id = 'loc_' + Math.random().toString(36).substring(2, 10);
+                    this.historicoGeral.unshift(item);
+                    localStorage.setItem('engeseg_acessos_bkp', JSON.stringify(this.historicoGeral));
+                    this.carregarModoLocalFallback();
                 },
 
                 async registrarSaida(id) {
-                    try { await db.collection("controle_acesso").doc(id).update({ data_saida: new Date().toISOString() }); } catch (err) {}
+                    if (this.realtimeAtivo && db) {
+                        try { await db.collection("controle_acesso").doc(id).update({ data_saida: new Date().toISOString() }); return; } catch (e){}
+                    }
+                    const locais = JSON.parse(localStorage.getItem('engeseg_acessos_bkp') || '[]');
+                    const idx = locais.findIndex(i => i.id === id);
+                    if (idx !== -1) {
+                        locais[idx].data_saida = new Date().toISOString();
+                        localStorage.setItem('engeseg_acessos_bkp', JSON.stringify(locais));
+                        this.carregarModoLocalFallback();
+                    }
                 },
 
                 async deletarRegistro(id) {
-                    if (!confirm("Excluir definitivamente este registro do histórico da nuvem?")) return;
-                    try { await db.collection("controle_acesso").doc(id).delete(); } catch (err) {}
+                    if (!confirm("Excluir definitivamente este registro?")) return;
+                    if (this.realtimeAtivo && db) {
+                        try { await db.collection("controle_acesso").doc(id).delete(); return; } catch (e){}
+                    }
+                    const locais = JSON.parse(localStorage.getItem('engeseg_acessos_bkp') || '[]');
+                    localStorage.setItem('engeseg_acessos_bkp', JSON.stringify(locais.filter(i => i.id !== id)));
+                    this.carregarModoLocalFallback();
                 },
 
                 async adicionarRestricao() {
                     if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return;
-                    try {
-                        await db.collection("restricoes").add({ 
-                            placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
-                            motivo: String(this.formBloqueio.motivo) 
-                        });
-                        this.formBloqueio = { placa: '', motivo: '' };
-                    } catch (err) {}
+                    const r = { placa: this.formBloqueio.placa.toUpperCase().trim(), motivo: this.formBloqueio.motivo };
+                    
+                    if (this.realtimeAtivo && db) {
+                        try { await db.collection("restricoes").add(r); } catch (e){}
+                    } else {
+                        const restricoes = JSON.parse(localStorage.getItem('engeseg_restricoes_bkp') || '[]');
+                        r.id = 'blq_' + Math.random().toString(36).substring(2, 10);
+                        restricoes.unshift(r);
+                        localStorage.setItem('engeseg_restricoes_bkp', JSON.stringify(restricoes));
+                        this.carregarModoLocalFallback();
+                    }
+                    this.formBloqueio = { placa: '', motivo: '' };
                 },
 
                 async removerRestricao(id) {
-                    try { await db.collection("restricoes").doc(id).delete(); } catch (err) {}
+                    if (this.realtimeAtivo && db) {
+                        try { await db.collection("restricoes").doc(id).delete(); return; } catch (e){}
+                    }
+                    const restricoes = JSON.parse(localStorage.getItem('engeseg_restricoes_bkp') || '[]');
+                    localStorage.setItem('engeseg_restricoes_bkp', JSON.stringify(restricoes.filter(i => i.id !== id)));
+                    this.carregarModoLocalFallback();
                 },
 
                 abrirModoAdmin() {
@@ -499,24 +545,12 @@
                 historicoFiltrado() {
                     if (!this.buscaHistorico.trim()) return this.historicoGeral;
                     const t = this.buscaHistorico.toLowerCase().trim();
-                    return this.historicoGeral.filter(i => 
-                        (i.placa && i.placa.toLowerCase().includes(t)) || 
-                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)) ||
-                        (i.destino && i.destino.toLowerCase().includes(t))
-                    );
+                    return this.historicoGeral.filter(i => (i.placa && i.placa.toLowerCase().includes(t)) || (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)));
                 },
 
                 exportarDados(tipo) {
-                    let limiteData = new Date();
-                    if (tipo === 'diario') limiteData.setHours(0,0,0,0);
-                    if (tipo === 'semanal') limiteData.setDate(limiteData.getDate() - 7);
-                    if (tipo === 'mensal') limiteData.setDate(limiteData.getDate() - 30);
-
-                    const filtrados = this.historicoGeral.filter(item => new Date(item.data_entrada) >= limiteData);
-                    if (filtrados.length === 0) return alert("Nenhum dado encontrado no período selecionado.");
-
-                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Documento;Veiculo;Destino;Entrada;Saida\n";
-                    filtrados.forEach(i => {
+                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Destino;Entrada;Saida\n";
+                    this.historicoGeral.forEach(i => {
                         csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`;
                     });
                     const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Relatorio_${tipo}.csv`);
