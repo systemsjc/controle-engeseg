@@ -41,7 +41,7 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Conectado ao Cloud' : 'Buscando Nuvem...'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Desconectado'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
@@ -133,7 +133,7 @@
                             type="text"
                             placeholder="Ex: Fiat Punto / Titan Cinza"
                             x-model="formData.veiculo_modelo"
-                            class="w-full bg-slate-900 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
+                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
                         />
                     </div>
 
@@ -362,8 +362,11 @@
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
                             const item = { id: doc.id, ...doc.data() };
-                            geral.push(item);
-                            if (item.data_saida === null) internos.push(item);
+                            // Filtra o documento de teste inicial para não poluir a interface da guarita
+                            if (item.teste !== "123") {
+                                geral.push(item);
+                                if (item.data_saida === null) internos.push(item);
+                            }
                         });
                         internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
                         geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
@@ -435,7 +438,6 @@
                         data_saida: null
                     };
 
-                    // Limpeza reativa da interface para evitar concorrência de loops
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
