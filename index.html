@@ -6,7 +6,7 @@
     <title>Engeseg Vigilância - Controle de Acessos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
         ::-webkit-scrollbar { width: 6px; }
@@ -41,7 +41,7 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Supabase Híbrido Ativo' : 'Backup Local Operacional'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Supabase Sincronizado' : 'Backup Local Ativo'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
@@ -55,8 +55,8 @@
                 <span class="text-xs text-slate-400" x-text="cadastroAutoPreenchido ? '✨ Dados recuperados do histórico' : 'Guarita / Entrada'"></span>
             </div>
 
-            <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-text="erroValidacao"></div>
-            <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse">
+            <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-text="erroValidacao" x-cloak></div>
+            <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse" x-cloak>
                 ⚠️ <strong>ACESSO BLOQUEADO:</strong> <span x-text="placaBloqueadaMsg"></span>
             </div>
 
@@ -117,7 +117,7 @@
                         />
                     </div>
 
-                    <div x-show="formData.tipo_visitante === 'Prestador'" x-transition>
+                    <div x-show="formData.tipo_visitante === 'Prestador'" x-transition x-cloak>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Documento (RG/CPF)</label>
                         <input
                             type="text"
@@ -170,14 +170,14 @@
 
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500 flex-1 flex flex-col justify-center items-center">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
-                <p class="text-sm">Sincronizando tabelas relacionais PostgreSQL...</p>
+                <p class="text-sm">Buscando tabelas relacionais PostgreSQL Cloud...</p>
             </div>
 
-            <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center">
+            <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center" x-cloak>
                 <p class="text-slate-500 font-medium">Nenhum veículo ativo no pátio.</p>
             </div>
 
-            <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 flex-1">
+            <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 flex-1" x-cloak>
                 <template x-for="item in veiculosInternos" :key="item.id">
                     <div :class="obterBordaCard(item)" class="bg-slate-900/60 p-4 rounded-xl border-l-4 shadow-md flex justify-between items-start space-x-3 transition-all hover:bg-slate-900 h-fit">
                         <div class="space-y-1.5 flex-1 min-w-0">
@@ -323,13 +323,13 @@
                 </a>
             </div>
         </div>
-    </header>
+    </footer>
 
     <script>
-        const SUPABASE_URL = "https://jgqemhwolfukazhaatse.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncWVtaHdvbGZ1a2F6aGFhdHNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc0MDgsImV4cCI6MjA5NzI1MzQwOH0.cGl-AxNThATZR7K4dc7rQkyadVyu4xdk4hBiIt6ebDc";
+        const SUPABASE_URL = "https://jgqemhwolfukazhaatse.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncWVtaHdvbGZ1a2F6aGFhdHNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc0MDgsImV4cCI6MjA5NzI1MzQwOH0.cGl-AxNThATZR7K4dc7rQkyadVyu4xdk4hBiIt6ebDc"; 
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
 
         function appPortaria() {
             return {
@@ -371,11 +371,11 @@
                             localStorage.setItem('engeseg_postgres_cache', JSON.stringify(logsMapeados));
                             this.atualizarInterfaceLocal();
                         }
-                        this.realtimeAtivo = true;
+                        this.realtimeAtivo = true; 
                     } catch(e) {
                         this.realtimeAtivo = false;
                     }
-                    this.carregandoInicial = false;
+                    this.carregandoInicial = false; 
 
                     try {
                         const { data: bloqueios } = await supabaseClient.from('restricoes').select('*');
@@ -384,20 +384,34 @@
                             localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
                         }
                     } catch(e) {
-                        this.listaNegra = JSON.parse(localStorage.getItem('engeseg_blacklist_cache') || '[]');
+                        this.listaNegra = JSON.parse(localStorage.getItem('engeseg_blacklist_cache') || '[]'); 
                     }
+
+                    // Escuta reativa estável em tempo real
+                    supabaseClient.channel('schema-db-changes')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'controle_acesso' }, async () => {
+                            const { data } = await supabaseClient.from('controle_acesso').select('*');
+                            if (data) {
+                                const mapeados = data.map(i => ({
+                                    id: 'db_' + i.id, db_id: i.id, tipo_visitante: i.tipo_visitante, placa: i.placa, destino: i.destino, nome_condutor: i.nome_condutor, documento: i.documento, veiculo_modelo: i.veiculo_modelo, observacoes: i.observacoes, data_entrada: i.data_entrada, data_saida: i.data_saida
+                                }));
+                                localStorage.setItem('engeseg_postgres_cache', JSON.stringify(mapeados));
+                                this.atualizarInterfaceLocal();
+                            }
+                        })
+                        .subscribe();
                 },
 
                 atualizarInterfaceLocal() {
-                    const logs = JSON.parse(localStorage.getItem('engeseg_postgres_cache') || '[]');
-                    const internos = logs.filter(i => i.data_saida === null);
+                    const logs = JSON.parse(localStorage.getItem('engeseg_postgres_cache') || '[]'); 
+                    const internos = logs.filter(i => i.data_saida === null); 
                     
-                    internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                    logs.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                    internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada)); 
+                    logs.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada)); 
                     
-                    this.veiculosInternos = internos;
-                    this.historicoGeral = logs;
-                    if(logs.length > 0) this.carregandoInicial = false;
+                    this.veiculosInternos = internos; 
+                    this.historicoGeral = logs; 
+                    if(logs.length > 0 || !this.carregandoInicial) this.carregandoInicial = false; 
                 },
 
                 verificarPlacaExistente() {
@@ -406,191 +420,196 @@
                         this.cadastroAutoPreenchido = false;
                         return;
                     }
-                    this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+                    this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '').trim(); 
                     
-                    const bloqueioAtivo = this.listaNegra.find(item => item && item.placa === this.formData.placa);
+                    const bloqueioAtivo = this.listaNegra.find(item => item && item.placa === this.formData.placa); 
                     if (bloqueioAtivo) {
-                        this.placaBloqueadaMsg = bloqueioAtivo.motivo || 'Restrito';
+                        this.placaBloqueadaMsg = bloqueioAtivo.motivo || 'Restrito'; 
                         return;
-                    } else { this.placaBloqueadaMsg = ''; }
+                    } else { this.placaBloqueadaMsg = ''; } 
 
                     if (this.formData.placa.length >= 4 && this.historicoGeral.length > 0) {
-                        const correspondencia = this.historicoGeral.find(item => item && item.placa === this.formData.placa);
+                        const correspondencia = this.historicoGeral.find(item => item && item.placa === this.formData.placa); 
                         if (correspondencia) {
-                            this.formData.nome_condutor = correspondencia.nome_condutor || '';
-                            this.formData.documento = correspondencia.documento || '';
-                            this.formData.veiculo_modelo = correspondencia.veiculo_modelo || '';
+                            this.formData.nome_condutor = correspondencia.nome_condutor || ''; 
+                            this.formData.documento = correspondencia.documento || ''; 
+                            this.formData.veiculo_modelo = correspondencia.veiculo_modelo || ''; 
                             this.cadastroAutoPreenchido = true;
                             return;
                         }
                     }
-                    this.cadastroAutoPreenchido = false;
+                    this.cadastroAutoPreenchido = false; 
                 },
 
                 async registrarEntrada() {
-                    this.tentouEnviar = true;
-                    this.erroValidacao = '';
+                    this.tentouEnviar = true; 
+                    this.erroValidacao = ''; 
 
-                    if (!this.formData.placa || !this.formData.destino) {
-                        this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios.";
+                    if (!this.formData.placa || !this.formData.destino) { 
+                        this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios."; 
                         return;
                     }
-                    // CORREÇÃO 1: Corrigido o tipo de validação de 'Incrementar' para 'Prestador'
-                    if (this.formData.tipo_visitante === 'Prestador' && !this.formData.nome_condutor) {
+                    if (this.formData.tipo_visitante === 'Prestador' && !this.formData.nome_condutor) { 
                         this.erroValidacao = "⚠️ ATENÇÃO: O campo Nome do Condutor é obrigatório para Prestadores.";
                         return;
                     }
-                    if (this.placaBloqueadaMsg) return;
+                    if (this.placaBloqueadaMsg) return; 
 
-                    const isoEntrada = new Date().toISOString();
+                    const isoEntrada = new Date().toISOString(); 
                     const localId = 'temp_' + Math.floor(Math.random() * 100000);
 
                     const pacoteDados = {
                         id: localId,
                         db_id: null,
-                        tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
-                        nome_condutor: String(this.formData.nome_condutor || ''),
-                        documento: String(this.formData.documento || ''),
-                        placa: String(this.formData.placa).toUpperCase().trim(),
-                        veiculo_modelo: String(this.formData.veiculo_modelo || ''),
-                        destino: String(this.formData.destino || ''),
-                        observacoes: String(this.formData.observacoes || ''),
-                        data_entrada: isoEntrada,
-                        data_saida: null
+                        tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'), 
+                        nome_condutor: String(this.formData.nome_condutor || ''), 
+                        documento: String(this.formData.documento || ''), 
+                        placa: String(this.formData.placa).toUpperCase().trim(), 
+                        veiculo_modelo: String(this.formData.veiculo_modelo || ''), 
+                        destino: String(this.formData.destino || ''), 
+                        observacoes: String(this.formData.observacoes || ''), 
+                        data_entrada: isoEntrada, 
+                        data_saida: null 
                     };
 
-                    // CORREÇÃO 2: Removida a variável fantasma 'this.幕' que quebrava o script no celular
-                    this.historicoGeral.unshift(pacoteDados);
-                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
-                    this.atualizarInterfaceLocal();
+                    this.historicoGeral.unshift(pacoteDados); 
+                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral)); 
+                    this.atualizarInterfaceLocal(); 
 
-                    // Envio completo estruturado para o Postgres Cloud
+                    // Envio em plano de fundo higienizado para o Supabase
                     supabaseClient.from('controle_acesso').insert([{
-                        tipo_visitante: pacoteDados.tipo_visitante,
-                        nome_condutor: pacoteDados.nome_condutor,
-                        documento: pacoteDados.documento,
-                        placa: pacoteDados.placa,
-                        veiculo_modelo: pacoteDados.veiculo_modelo,
-                        destino: pacoteDados.destino,
+                        tipo_visitante: pacoteDados.tipo_visitante, 
+                        nome_condutor: pacoteDados.nome_condutor, 
+                        documento: pacoteDados.documento, 
+                        placa: pacoteDados.placa, 
+                        veiculo_modelo: pacoteDados.veiculo_modelo, 
+                        destino: pacoteDados.destino, 
                         observacoes: pacoteDados.observacoes,
                         data_entrada: isoEntrada
                     }]).then(() => {
-                        this.carregarDados();
-                    }).catch(e => {
-                        console.error("Armazenado em backup local");
+                        // Sincroniza os IDs sem disparar loops recursivos
+                        supabaseClient.from('controle_acesso').select('*').then(({data}) => {
+                            if(data) {
+                                const mapeados = data.map(i => ({ id: 'db_' + i.id, db_id: i.id, tipo_visitante: i.tipo_visitante, placa: i.placa, destino: i.destino, nome_condutor: i.nome_condutor, documento: i.documento, veiculo_modelo: i.veiculo_modelo, observacoes: i.observacoes, data_entrada: i.data_entrada, data_saida: i.data_saida }));
+                                localStorage.setItem('engeseg_postgres_cache', JSON.stringify(mapeados));
+                                this.atualizarInterfaceLocal();
+                            }
+                        });
                     });
 
-                    // Limpa a tela imediatamente
-                    this.formData.nome_condutor = '';
-                    this.formData.documento = '';
-                    this.formData.placa = '';
-                    this.formData.veiculo_modelo = '';
-                    this.formData.destino = '';
-                    this.formData.observacoes = '';
-                    this.cadastroAutoPreenchido = false;
-                    this.tentouEnviar = false;
+                    // Limpa o formulário instantaneamente para o porteiro
+                    this.formData.nome_condutor = ''; 
+                    this.formData.documento = ''; 
+                    this.formData.placa = ''; 
+                    this.formData.veiculo_modelo = ''; 
+                    this.formData.destino = ''; 
+                    this.formData.observacoes = ''; 
+                    this.cadastroAutoPreenchido = false; 
+                    this.tentouEnviar = false; 
                 },
 
                 async registrarSaida(id, db_id) {
-                    const dataIso = new Date().toISOString();
+                    const dataIso = new Date().toISOString(); 
                     
-                    const index = this.historicoGeral.findIndex(item => item.id === id);
+                    const index = this.historicoGeral.findIndex(item => item.id === id); 
                     if (index !== -1) {
-                        this.historicoGeral[index].data_saida = dataIso;
-                        localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
-                        this.atualizarInterfaceLocal();
+                        this.historicoGeral[index].data_saida = dataIso; 
+                        localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral)); 
+                        this.atualizarInterfaceLocal(); 
                     }
 
                     if (db_id) {
-                        await supabaseClient.from('controle_acesso').update({ data_saida: dataIso }).eq('id', db_id);
+                        await supabaseClient.from('controle_acesso').update({ data_saida: dataIso }).eq('id', db_id); 
                     }
                 },
 
                 async deletarRegistro(id, db_id) {
-                    if (!confirm("Excluir definitivamente este registro?")) return;
+                    if (!confirm("Excluir definitivamente este registro?")) return; 
                     
-                    this.historicoGeral = this.historicoGeral.filter(item => item.id !== id);
-                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
-                    this.atualizarInterfaceLocal();
+                    this.historicoGeral = this.historicoGeral.filter(item => item.id !== id); 
+                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral)); 
+                    this.atualizarInterfaceLocal(); 
 
                     if (db_id) {
-                        await supabaseClient.from('controle_acesso').delete().eq('id', db_id);
+                        await supabaseClient.from('controle_acesso').delete().eq('id', db_id); 
                     }
                 },
 
                 async adicionarRestricao() {
-                    if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return;
+                    if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return; 
                     
                     const localBlq = {
                         id: 'local_blq_' + Math.floor(Math.random() * 1000),
                         db_id: null,
-                        placa: String(this.formBloqueio.placa).toUpperCase().trim(),
-                        motivo: String(this.formBloqueio.motivo)
+                        placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
+                        motivo: String(this.formBloqueio.motivo) 
                     };
 
-                    this.listaNegra.unshift(localBlq);
-                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
+                    this.listaNegra.unshift(localBlq); 
+                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra)); 
 
-                    await supabaseClient.from('restricoes').insert([{
-                        placa: localBlq.placa,
-                        motivo: localBlq.motivo
+                    await supabaseClient.from('restricoes').insert([{ 
+                        placa: localBlq.placa, 
+                        motivo: localBlq.motivo 
                     }]);
                     
-                    this.formBloqueio = { placa: '', motivo: '' };
-                    this.carregarDados();
+                    this.formBloqueio = { placa: '', motivo: '' }; 
+                    
+                    const { data } = await supabaseClient.from('restricoes').select('*');
+                    if(data) this.listaNegra = data.map(b => ({ id: 'blq_' + b.id, db_id: b.id, placa: b.placa, motivo: b.motivo }));
                 },
 
                 async removerRestricao(id, db_id) {
-                    this.listaNegra = this.listaNegra.filter(item => item.id !== id);
-                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
+                    this.listaNegra = this.listaNegra.filter(item => item.id !== id); 
+                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra)); 
 
                     if (db_id) {
-                        await supabaseClient.from('restricoes').delete().eq('id', db_id);
+                        await supabaseClient.from('restricoes').delete().eq('id', db_id); 
                     }
                 },
 
                 abrirModoAdmin() {
-                    const senha = prompt("Insira a senha de Administrador:");
-                    if (senha !== null && senha.trim() === "20Engeseg26") this.abaAtiva = 'admin';
+                    const senha = prompt("Insira a senha de Administrador:"); 
+                    if (senha !== null && senha.trim() === "20Engeseg26") this.abaAtiva = 'admin'; 
                 },
 
                 historicoFiltrado() {
-                    if (!this.buscaHistorico.trim()) return this.historicoGeral;
-                    const t = this.buscaHistorico.toLowerCase().trim();
+                    if (!this.buscaHistorico.trim()) return this.historicoGeral; 
+                    const t = this.buscaHistorico.toLowerCase().trim(); 
                     return this.historicoGeral.filter(i => 
                         (i.placa && i.placa.toLowerCase().includes(t)) || 
-                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t))
+                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)) 
                     );
                 },
 
                 exportarDados(tipo) {
-                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Destino;Entrada;Saida\n";
+                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Destino;Entrada;Saida\n"; 
                     this.historicoGeral.forEach(i => {
-                        csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`;
+                        csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`; 
                     });
-                    const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Relatorio_${tipo}.csv`);
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Relatorio_${tipo}.csv`); 
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link); 
                 },
 
                 formatarData(iso) {
-                    if (!iso) return '-';
-                    const d = new Date(iso);
-                    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                    if (!iso) return '-'; 
+                    const d = new Date(iso); 
+                    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); 
                 },
 
                 calcularPermanencia(entrada) {
-                    const m = Math.floor((this.agora - new Date(entrada)) / 60000);
-                    return m < 60 ? `${m} min` : `${Math.floor(m/60)}h ${m%60}m`;
+                    const m = Math.floor((this.agora - new Date(entrada)) / 60000); 
+                    return m < 60 ? `${m} min` : `${Math.floor(m/60)}h ${m%60}m`; 
                 },
 
-                obterMinutos(entrada) { return Math.floor((this.agora - new Date(entrada)) / 60000); },
+                obterMinutos(entrada) { return Math.floor((this.agora - new Date(entrada)) / 60000); }, 
                 obterBordaCard(i) {
-                    const m = this.obterMinutos(i.data_entrada);
-                    if (i.tipo_visitante === 'Motoboy') return m > 15 ? 'border-rose-500 border-l-8 animate-pulse bg-rose-950/20' : 'border-amber-500';
-                    return i.tipo_visitante === 'Uber' && m > 10 ? 'border-rose-500' : 'border-slate-500';
+                    const m = this.obterMinutos(i.data_entrada); 
+                    if (i.tipo_visitante === 'Motoboy') return m > 15 ? 'border-rose-500 border-l-8 animate-pulse bg-rose-950/20' : 'border-amber-500'; 
+                    return i.tipo_visitante === 'Uber' && m > 10 ? 'border-rose-500' : 'border-slate-500'; 
                 },
-                obterBadgeEstilo(t) { return t === 'Motoboy' ? 'bg-amber-500/20 text-amber-400' : t === 'Uber' ? 'bg-slate-700 text-slate-300' : 'bg-sky-500/20 text-sky-400'; },
-                obterCorTimer(i) { const m = this.obterMinutos(i.data_entrada); return ((i.tipo_visitante === 'Motoboy' && m > 15) || (i.tipo_visitante === 'Uber' && m > 10)) ? 'text-rose-400 font-bold' : 'text-slate-400'; }
+                obterBadgeEstilo(t) { return t === 'Motoboy' ? 'bg-amber-500/20 text-amber-400' : t === 'Uber' ? 'bg-slate-700 text-slate-300' : 'bg-sky-500/20 text-sky-400'; }, 
+                obterCorTimer(i) { const m = this.obterMinutos(i.data_entrada); return ((i.tipo_visitante === 'Motoboy' && m > 15) || (i.tipo_visitante === 'Uber' && m > 10)) ? 'text-rose-400 font-bold' : 'text-slate-400'; } 
             }
         }
     </script>
