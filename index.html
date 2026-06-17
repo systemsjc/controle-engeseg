@@ -171,7 +171,7 @@
 
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500 flex-1 flex flex-col justify-center items-center">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
-                <p class="text-sm">Sincronizando banco de dados...</p>
+                <p class="text-sm">Sincronizando banco de dados Cloud...</p>
             </div>
 
             <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center">
@@ -362,8 +362,8 @@
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
                             const item = { id: doc.id, ...doc.data() };
-                            // CORREÇÃO CRÍTICA: Filtro inteligente tolerante a maiúsculas, minúsculas ou campos inexistentes
-                            if (!item.hasOwnProperty('Teste') && !item.hasOwnProperty('teste')) {
+                            // CORREÇÃO CRÍTICA DO TRAVAMENTO: Filtro totalmente tolerante e à prova de falhas de digitação no Firebase
+                            if (!item.hasOwnProperty('Teste') && !item.hasOwnProperty('teste') && item.hasOwnProperty('placa')) {
                                 geral.push(item);
                                 if (item.data_saida === null) internos.push(item);
                             }
@@ -438,7 +438,7 @@
                         data_saida: null
                     };
 
-                    // Limpeza imediata da interface visual (Garante velocidade no celular da guarita)
+                    // Limpeza reativa e imediata dos campos da tela (Destrava o botão no exato clique)
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
