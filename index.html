@@ -17,6 +17,7 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col" 
@@ -343,7 +344,7 @@
         </div>
     </footer>
 
-    <!-- Script de Inicialização Direta do Firebase Sincronizado Puro -->
+    <!-- Script de Inicialização Direta do Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
@@ -380,7 +381,6 @@
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
                             const item = { id: doc.id, ...doc.data() };
-                            // PROTEÇÃO MÁXIMA: Filtra e aceita apenas pacotes reais que possuem placa e data válidas
                             if (item && item.placa && item.data_entrada) {
                                 geral.push(item);
                                 if (item.data_saida === null) internos.push(item);
@@ -433,16 +433,19 @@
                     this.erroValidacao = '';
 
                     if (!this.formData.placa || !this.formData.destino) {
-                        this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios para confirmar a entrada.";
+                        this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios.";
                         return;
                     }
                     if (this.formData.tipo_visitante === 'Prestador' && !this.formData.nome_condutor) {
-                        this.erroValidacao = "⚠️ ATENÇÃO: Para Prestadores de Serviço, o campo Nome do Condutor é obrigatório.";
+                        this.erroValidacao = "⚠️ ATENÇÃO: O campo Nome do Condutor é obrigatório.";
                         return;
                     }
                     if (this.enviando || this.placaBloqueadaMsg) return;
                     
                     this.enviando = true;
+
+                    // Geração manual de ID aleatório estável de 20 caracteres compatível com Firestore
+                    const novoIdDocumento = 'doc_' + Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
 
                     const pacoteDados = {
                         tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
@@ -456,22 +459,21 @@
                         data_saida: null
                     };
 
-                    // Reseta os campos visuais instantaneamente para liberar o próximo atendimento
-                    this.formData.nome_condutor = '';
-                    this.formData.documento = '';
-                    this.formData.placa = '';
-                    this.formData.veiculo_modelo = '';
-                    this.formData.destino = '';
-                    this.formData.observacoes = '';
-                    this.cadastroAutoPreenchido = false;
-                    this.tentouEnviar = false;
-
-                    db.collection("controle_acesso").add(pacoteDados)
+                    // CORREÇÃO CIRÚRGICA: Uso de .doc(id).set() com ID pré-mapeado para burlar travas de CORS do Chrome móvel
+                    db.collection("controle_acesso").doc(novoIdDocumento).set(pacoteDados)
                     .then(() => {
+                        this.formData.nome_condutor = '';
+                        this.formData.documento = '';
+                        this.formData.placa = '';
+                        this.formData.veiculo_modelo = '';
+                        this.formData.destino = '';
+                        this.formData.observacoes = '';
+                        this.cadastroAutoPreenchido = false;
+                        this.tentouEnviar = false;
                         this.enviando = false;
                     })
                     .catch((err) => {
-                        this.erroValidacao = 'Erro ao salvar: ' + err.message;
+                        this.erroValidacao = 'Erro de gravação: ' + err.message;
                         this.enviando = false;
                     });
                 },
