@@ -14,7 +14,6 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col" 
@@ -42,7 +41,7 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Desconectado'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Conectado ao Cloud' : 'Buscando Nuvem...'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
@@ -56,8 +55,8 @@
                 <span class="text-xs text-slate-400" x-text="cadastroAutoPreenchido ? '✨ Dados recuperados do histórico' : 'Guarita / Entrada'"></span>
             </div>
 
-            <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-cloak x-text="erroValidacao"></div>
-            <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse" x-cloak>
+            <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-text="erroValidacao"></div>
+            <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse">
                 ⚠️ <strong>ACESSO BLOQUEADO:</strong> <span x-text="placaBloqueadaMsg"></span>
             </div>
 
@@ -118,7 +117,7 @@
                         />
                     </div>
 
-                    <div x-show="formData.tipo_visitante === 'Prestador'" x-transition x-cloak>
+                    <div x-show="formData.tipo_visitante === 'Prestador'" x-transition>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Documento (RG/CPF)</label>
                         <input
                             type="text"
@@ -134,7 +133,7 @@
                             type="text"
                             placeholder="Ex: Fiat Punto / Titan Cinza"
                             x-model="formData.veiculo_modelo"
-                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
+                            class="w-full bg-slate-900 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
                         />
                     </div>
 
@@ -157,7 +156,7 @@
                     class="w-full p-3 rounded-lg font-bold text-sm tracking-wide shadow-lg transition active:scale-[0.99] mt-2 flex justify-center items-center text-white"
                 >
                     <span x-show="!enviando">Confirmar Entrada</span>
-                    <span x-show="enviando" class="animate-spin inline-block w-4 h-4 border-2 border-white border-b-transparent rounded-full" x-cloak></span>
+                    <span x-show="enviando" class="animate-spin inline-block w-4 h-4 border-2 border-white border-b-transparent rounded-full"></span>
                 </button>
             </div>
         </section>
@@ -175,11 +174,11 @@
                 <p class="text-sm">Sincronizando banco de dados...</p>
             </div>
 
-            <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center" x-cloak>
+            <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center">
                 <p class="text-slate-500 font-medium">Nenhum veículo ativo no momento.</p>
             </div>
 
-            <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 flex-1" x-cloak>
+            <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 flex-1">
                 <template x-for="item in veiculosInternos" :key="item.id">
                     <div :class="obterBordaCard(item)" class="bg-slate-900/60 p-4 rounded-xl border-l-4 shadow-md flex justify-between items-start space-x-3 transition-all hover:bg-slate-900 h-fit">
                         <div class="space-y-1.5 flex-1 min-w-0">
@@ -436,7 +435,7 @@
                         data_saida: null
                     };
 
-                    // CORREÇÃO: Limpa a tela imediatamente antes da resposta do banco para evitar o travamento do Alpine
+                    // Limpeza reativa da interface para evitar concorrência de loops
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
