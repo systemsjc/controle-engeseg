@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engeseg Vigilância - Controle de Acessos</title>
+    <!-- Tailwind CSS v3 CDN - Estável -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Biblioteca Oficial do Supabase via CDN (JS Client) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
@@ -21,9 +23,11 @@
       x-data="appPortaria()" 
       x-init="initApp()">
 
+    <!-- Header Principal -->
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-4">
+                <!-- LOGO ENGESEG -->
                 <div class="flex items-center justify-center py-1">
                     <img src="logo-engeseg.png" class="h-16 w-auto object-contain max-w-[180px]" alt="Logo Engeseg Vigilância">
                 </div>
@@ -33,6 +37,7 @@
                 </div>
             </div>
             
+            <!-- Menu de Abas Alternáveis -->
             <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-sm font-bold">
                 <button @click="abaAtiva = 'portaria'" :class="abaAtiva === 'portaria' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition">Portaria</button>
                 <button @click="abrirModoAdmin()" :class="abaAtiva === 'admin' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition flex items-center space-x-1">
@@ -42,14 +47,16 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Conectando...'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Supabase SQL Ativo' : 'Conectando...'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
     </header>
 
+    <!-- TELA DA PORTARIA -->
     <main x-show="abaAtiva === 'portaria'" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 w-full" x-transition>
         
+        <!-- FORMULÁRIO -->
         <section :class="placaBloqueadaMsg ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-slate-700'" class="lg:col-span-4 bg-slate-800 p-5 rounded-xl border shadow-xl h-fit transition-all duration-300">
             <div class="mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-white">Novo Registro</h2>
@@ -132,7 +139,7 @@
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Modelo do Veículo</label>
                         <input
                             type="text"
-                            placeholder="Ex: Fiat Punto / Titan Cinza"
+                            placeholder="Ex: Fiat Punto"
                             x-model="formData.veiculo_modelo"
                             class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
                         />
@@ -162,6 +169,7 @@
             </div>
         </section>
 
+        <!-- VEÍCULOS NO PÁTIO -->
         <section class="lg:col-span-8 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                 <h2 class="text-lg font-bold text-white flex items-center space-x-2">
@@ -172,11 +180,11 @@
 
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500 flex-1 flex flex-col justify-center items-center">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
-                <p class="text-sm">Sincronizando banco de dados Cloud...</p>
+                <p class="text-sm">Buscando tabelas relacionais PostgreSQL...</p>
             </div>
 
             <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center">
-                <p class="text-slate-500 font-medium">Nenhum veículo ativo no momento.</p>
+                <p class="text-slate-500 font-medium">Nenhum veículo ativo no pátio.</p>
             </div>
 
             <div x-show="!carregandoInicial && veiculosInternos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 flex-1">
@@ -204,17 +212,19 @@
         </section>
     </main>
 
+    <!-- MODO ADMINISTRADOR -->
     <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition x-cloak>
         <div class="flex space-x-4 mb-4 border-b border-slate-700 pb-2">
             <button @click="subAbaAdmin = 'historico'" :class="subAbaAdmin === 'historico' ? 'text-blue-400 border-b-2 border-blue-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">📋 Histórico de Auditoria</button>
             <button @click="subAbaAdmin = 'restricoes'" :class="subAbaAdmin === 'restricoes' ? 'text-rose-400 border-b-2 border-rose-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">🚫 Restrições de Entrada (<span x-text="listaNegra.length">0</span>)</button>
         </div>
 
+        <!-- HISTÓRICO GERAL -->
         <section x-show="subAbaAdmin === 'historico'" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-black text-white uppercase tracking-wider">Histórico Geral de Acessos</h2>
-                    <p class="text-xs text-slate-400">Exportações temporais e exclusão de logs</p>
+                    <p class="text-xs text-slate-400">Auditoria relacional direta</p>
                 </div>
                 <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                     <button @click="exportarDados('diario')" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition">📥 Exportar Hoje</button>
@@ -223,7 +233,7 @@
                 </div>
                 <div class="relative w-full lg:w-72">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">🔍</span>
-                    <input type="text" placeholder="Buscar placa, nome ou destino..." x-model="buscaHistorico" class="w-full bg-slate-900 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"/>
+                    <input type="text" placeholder="Buscar placa ou condutor..." x-model="buscaHistorico" class="w-full bg-slate-900 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"/>
                 </div>
             </div>
 
@@ -265,6 +275,7 @@
             </div>
         </section>
 
+        <!-- RESTRIÇÕES DE ENTRADA -->
         <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition x-cloak>
             <div class="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 h-fit shadow-xl">
                 <h3 class="text-md font-bold text-white mb-3 uppercase tracking-wider text-rose-400">Bloquear Nova Placa</h3>
@@ -309,6 +320,7 @@
         </section>
     </main>
 
+    <!-- RODAPÉ DE CRÉDITOS -->
     <footer class="bg-slate-800 border-t border-slate-700 py-3.5 px-6 shadow-xl mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-2 font-medium tracking-wide">
             <div class="flex items-center space-x-1.5">
@@ -327,18 +339,13 @@
         </div>
     </footer>
 
+    <!-- Lógica Exclusiva de Integração do Supabase -->
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
-            authDomain: "controle-engeseg.firebaseapp.com",
-            projectId: "controle-engeseg",
-            storageBucket: "controle-engeseg.firebasestorage.app",
-            messagingSenderId: "999888889619",
-            appId: "1:999888889619:web:b65e8d88dec7743aef76e6"
-        };
+        // CONFIGURAÇÃO DO SUPABASE (Insira seus dados aqui)
+        const SUPABASE_URL = "https://jgqemhwolfukazhaatse.supabase.co/rest/v1/";
+        const SUPABASE_ANON_KEY = "sb_publishable_VeUMKT-NDf3VD9uU7TkaNQ_QxKKQY4s";
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function appPortaria() {
             return {
@@ -358,33 +365,33 @@
 
                 atualizarRelogio() { this.horaAtual = new Date().toLocaleTimeString('pt-BR'); },
 
-                carregarDados() {
-                    db.collection("controle_acesso").onSnapshot((snapshot) => {
-                        let internos = []; let geral = [];
-                        snapshot.forEach((doc) => {
-                            const item = { id: doc.id, ...doc.data() };
-                            if (item && item.placa && item.data_entrada) {
-                                geral.push(item);
-                                if (item.data_saida === null) internos.push(item);
-                            }
-                        });
-                        
-                        internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        geral.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        
-                        this.veiculosInternos = internos;
-                        this.historicoGeral = geral;
-                        this.carregandoInicial = false;
+                async carregarDados() {
+                    // 1. Busca os registros iniciais direto do PostgreSQL
+                    const { data: logs, error: err1 } = await supabaseClient.from('controle_acesso').select('*');
+                    if (!err1 && logs) {
+                        this.historicoGeral = logs.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                        this.veiculosInternos = logs.filter(i => i.data_saida === null);
                         this.realtimeAtivo = true;
-                    }, (err) => { 
-                        this.realtimeAtivo = false; 
-                    });
+                    }
+                    this.carregandoInicial = false;
 
-                    db.collection("restricoes").onSnapshot((snapshot) => {
-                        let bloqueios = [];
-                        snapshot.forEach((doc) => { bloqueios.push({ id: doc.id, ...doc.data() }); });
-                        this.listaNegra = bloqueios;
-                    });
+                    const { data: bloqueios } = await supabaseClient.from('restricoes').select('*');
+                    if (bloqueios) this.listaNegra = bloqueios;
+
+                    // 2. Cria canais reativos em Tempo Real para atualizar a tela instantaneamente
+                    supabaseClient.channel('mudancas_db')
+                        .on('postgres_changes', { event: '*', filter: 'table=eq.controle_acesso' }, async () => {
+                            const { data } = await supabaseClient.from('controle_acesso').select('*');
+                            if (data) {
+                                this.historicoGeral = data.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                                this.veiculosInternos = data.filter(i => i.data_saida === null);
+                            }
+                        })
+                        .on('postgres_changes', { event: '*', filter: 'table=eq.restricoes' }, async () => {
+                            const { data } = await supabaseClient.from('restricoes').select('*');
+                            if (data) this.listaNegra = data;
+                        })
+                        .subscribe();
                 },
 
                 verificarPlacaExistente() {
@@ -437,12 +444,10 @@
                         placa: String(this.formData.placa).toUpperCase().trim(),
                         veiculo_modelo: String(this.formData.veiculo_modelo || ''),
                         destino: String(this.formData.destino || ''),
-                        observacoes: String(this.formData.observacoes || ''),
-                        data_entrada: new Date().toISOString(),
-                        data_saida: null
+                        observacoes: String(this.formData.observacoes || '')
                     };
 
-                    // Força a limpeza reativa antes de receber o retorno da nuvem
+                    // Limpa a tela na hora para dar velocidade total à guarita
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
@@ -452,38 +457,31 @@
                     this.cadastroAutoPreenchido = false;
                     this.tentouEnviar = false;
 
-                    db.collection("controle_acesso").add(pacoteDados)
-                    .then(() => {
-                        this.enviando = false;
-                    })
-                    .catch((err) => {
-                        this.erroValidacao = 'Erro de gravação: ' + err.message;
-                        this.enviando = false;
-                    });
+                    const { error } = await supabaseClient.from('controle_acesso').insert([pacoteDados]);
+                    if (error) this.erroValidacao = 'Erro de rede PostgreSQL: ' + error.message;
+                    this.enviando = false;
                 },
 
                 async registrarSaida(id) {
-                    try { await db.collection("controle_acesso").doc(id).update({ data_saida: new Date().toISOString() }); } catch (err) {}
+                    await supabaseClient.from('controle_acesso').update({ data_saida: new Date().toISOString() }).eq('id', id);
                 },
 
                 async deletarRegistro(id) {
-                    if (!confirm("Excluir definitivamente este registro do histórico da nuvem?")) return;
-                    try { await db.collection("controle_acesso").doc(id).delete(); } catch (err) {}
+                    if (!confirm("Excluir definitivamente este registro da nuvem PostgreSQL?")) return;
+                    await supabaseClient.from('controle_acesso').delete().eq('id', id);
                 },
 
                 async adicionarRestricao() {
                     if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return;
-                    try {
-                        await db.collection("restricoes").add({ 
-                            placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
-                            motivo: String(this.formBloqueio.motivo) 
-                        });
-                        this.formBloqueio = { placa: '', motivo: '' };
-                    } catch (err) {}
+                    await supabaseClient.from('restricoes').insert([{ 
+                        placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
+                        motivo: String(this.formBloqueio.motivo) 
+                    }]);
+                    this.formBloqueio = { placa: '', motivo: '' };
                 },
 
                 async removerRestricao(id) {
-                    try { await db.collection("restricoes").doc(id).delete(); } catch (err) {}
+                    await supabaseClient.from('restricoes').delete().eq('id', id);
                 },
 
                 abrirModoAdmin() {
@@ -496,13 +494,12 @@
                     const t = this.buscaHistorico.toLowerCase().trim();
                     return this.historicoGeral.filter(i => 
                         (i.placa && i.placa.toLowerCase().includes(t)) || 
-                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)) ||
-                        (i.destino && i.destino.toLowerCase().includes(t))
+                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t))
                     );
                 },
 
                 exportarDados(tipo) {
-                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Documento;Veiculo;Destino;Entrada;Saida\n";
+                    let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Destino;Entrada;Saida\n";
                     this.historicoGeral.forEach(i => {
                         csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`;
                     });
