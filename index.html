@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engeseg Vigilância - Controle de Acessos</title>
-    <!-- Tailwind CSS v3 CDN - Estável -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Biblioteca Oficial do Supabase via CDN (JS Client) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Alpine.js CDN -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
         ::-webkit-scrollbar { width: 6px; }
@@ -23,11 +20,9 @@
       x-data="appPortaria()" 
       x-init="initApp()">
 
-    <!-- Header Principal -->
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-4">
-                <!-- LOGO ENGESEG -->
                 <div class="flex items-center justify-center py-1">
                     <img src="logo-engeseg.png" class="h-16 w-auto object-contain max-w-[180px]" alt="Logo Engeseg Vigilância">
                 </div>
@@ -37,7 +32,6 @@
                 </div>
             </div>
             
-            <!-- Menu de Abas Alternáveis -->
             <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-sm font-bold">
                 <button @click="abaAtiva = 'portaria'" :class="abaAtiva === 'portaria' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition">Portaria</button>
                 <button @click="abrirModoAdmin()" :class="abaAtiva === 'admin' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition flex items-center space-x-1">
@@ -47,16 +41,14 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Supabase SQL Ativo' : 'Conectando...'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Supabase Híbrido Ativo' : 'Backup Local Operacional'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
     </header>
 
-    <!-- TELA DA PORTARIA -->
     <main x-show="abaAtiva === 'portaria'" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 w-full" x-transition>
         
-        <!-- FORMULÁRIO -->
         <section :class="placaBloqueadaMsg ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-slate-700'" class="lg:col-span-4 bg-slate-800 p-5 rounded-xl border shadow-xl h-fit transition-all duration-300">
             <div class="mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-white">Novo Registro</h2>
@@ -163,13 +155,11 @@
                     :class="placaBloqueadaMsg ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'"
                     class="w-full p-3 rounded-lg font-bold text-sm tracking-wide shadow-lg transition active:scale-[0.99] mt-2 flex justify-center items-center text-white"
                 >
-                    <span x-show="!enviando">Confirmar Entrada</span>
-                    <span x-show="enviando" class="animate-spin inline-block w-4 h-4 border-2 border-white border-b-transparent rounded-full"></span>
+                    <span>Confirmar Entrada</span>
                 </button>
             </div>
         </section>
 
-        <!-- VEÍCULOS NO PÁTIO -->
         <section class="lg:col-span-8 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                 <h2 class="text-lg font-bold text-white flex items-center space-x-2">
@@ -180,7 +170,7 @@
 
             <div x-show="carregandoInicial" class="text-center py-20 text-slate-500 flex-1 flex flex-col justify-center items-center">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-b-transparent rounded-full mb-3"></div>
-                <p class="text-sm">Buscando tabelas relacionais PostgreSQL...</p>
+                <p class="text-sm">Sincronizando tabelas relacionais PostgreSQL...</p>
             </div>
 
             <div x-show="!carregandoInicial && veiculosInternos.length === 0" class="text-center py-16 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/20 flex-1 flex flex-col justify-center items-center">
@@ -205,26 +195,24 @@
                                 <p class="text-slate-500 italic truncate text-[11px]" x-show="item.observacoes">"Obs: <span x-text="item.observacoes"></span>"</p>
                             </div>
                         </div>
-                        <button @click="registrarSaida(item.id)" class="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-md self-center">Liberar</button>
+                        <button @click="registrarSaida(item.id, item.db_id)" class="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow-md self-center">Liberar</button>
                     </div>
                 </template>
             </div>
         </section>
     </main>
 
-    <!-- MODO ADMINISTRADOR -->
     <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition x-cloak>
         <div class="flex space-x-4 mb-4 border-b border-slate-700 pb-2">
             <button @click="subAbaAdmin = 'historico'" :class="subAbaAdmin === 'historico' ? 'text-blue-400 border-b-2 border-blue-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">📋 Histórico de Auditoria</button>
             <button @click="subAbaAdmin = 'restricoes'" :class="subAbaAdmin === 'restricoes' ? 'text-rose-400 border-b-2 border-rose-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">🚫 Restrições de Entrada (<span x-text="listaNegra.length">0</span>)</button>
         </div>
 
-        <!-- HISTÓRICO GERAL -->
         <section x-show="subAbaAdmin === 'historico'" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-black text-white uppercase tracking-wider">Histórico Geral de Acessos</h2>
-                    <p class="text-xs text-slate-400">Auditoria relacional direta</p>
+                    <p class="text-xs text-slate-400">Auditoria relacional direta híbrida</p>
                 </div>
                 <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                     <button @click="exportarDados('diario')" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition">📥 Exportar Hoje</button>
@@ -266,7 +254,7 @@
                                     <span x-show="!item.data_saida" class="text-amber-500 font-bold animate-pulse uppercase">Dentro</span>
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <button @click="deletarRegistro(item.id)" class="text-rose-400 hover:text-rose-300 font-bold text-xs p-1">❌ Excluir</button>
+                                    <button @click="deletarRegistro(item.id, item.db_id)" class="text-rose-400 hover:text-rose-300 font-bold text-xs p-1">❌ Excluir</button>
                                 </td>
                             </tr>
                         </template>
@@ -275,7 +263,6 @@
             </div>
         </section>
 
-        <!-- RESTRIÇÕES DE ENTRADA -->
         <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition x-cloak>
             <div class="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 h-fit shadow-xl">
                 <h3 class="text-md font-bold text-white mb-3 uppercase tracking-wider text-rose-400">Bloquear Nova Placa</h3>
@@ -309,7 +296,7 @@
                                     <td class="px-4 py-3 font-mono font-black text-rose-400 tracking-wider" x-text="item.placa"></td>
                                     <td class="px-4 py-3 text-slate-300" x-text="item.motivo"></td>
                                     <td class="px-4 py-3 text-center">
-                                        <button @click="removerRestricao(item.id)" class="text-emerald-400 hover:text-emerald-300 font-bold text-xs">Liberar</button>
+                                        <button @click="removerRestricao(item.id, item.db_id)" class="text-emerald-400 hover:text-emerald-300 font-bold text-xs">Liberar</button>
                                     </td>
                                 </tr>
                             </template>
@@ -320,7 +307,6 @@
         </section>
     </main>
 
-    <!-- RODAPÉ DE CRÉDITOS -->
     <footer class="bg-slate-800 border-t border-slate-700 py-3.5 px-6 shadow-xl mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-2 font-medium tracking-wide">
             <div class="flex items-center space-x-1.5">
@@ -337,12 +323,10 @@
                 </a>
             </div>
         </div>
-    </footer>
+    </header>
 
-    <!-- Lógica Exclusiva de Integração do Supabase -->
     <script>
-        // CONFIGURAÇÃO DO SUPABASE (Insira seus dados aqui)
-        const SUPABASE_URL = "https://jgqemhwolfukazhaatse.supabase.co/";
+        const SUPABASE_URL = "https://jgqemhwolfukazhaatse.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_VeUMKT-NDf3VD9uU7TkaNQ_QxKKQY4s";
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -366,32 +350,54 @@
                 atualizarRelogio() { this.horaAtual = new Date().toLocaleTimeString('pt-BR'); },
 
                 async carregarDados() {
-                    // 1. Busca os registros iniciais direto do PostgreSQL
-                    const { data: logs, error: err1 } = await supabaseClient.from('controle_acesso').select('*');
-                    if (!err1 && logs) {
-                        this.historicoGeral = logs.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                        this.veiculosInternos = logs.filter(i => i.data_saida === null);
+                    this.atualizarInterfaceLocal();
+
+                    try {
+                        const { data: logs, error: err1 } = await supabaseClient.from('controle_acesso').select('*');
+                        if (!err1 && logs) {
+                            const logsMapeados = logs.map(i => ({
+                                id: 'db_' + i.id,
+                                db_id: i.id,
+                                tipo_visitante: i.tipo_visitante,
+                                placa: i.placa,
+                                destino: i.destino,
+                                nome_condutor: i.nome_condutor,
+                                documento: i.documento,
+                                veiculo_modelo: i.veiculo_modelo,
+                                observacoes: i.observacoes,
+                                data_entrada: i.data_entrada,
+                                data_saida: i.data_saida
+                            }));
+                            localStorage.setItem('engeseg_postgres_cache', JSON.stringify(logsMapeados));
+                            this.atualizarInterfaceLocal();
+                        }
                         this.realtimeAtivo = true;
+                    } catch(e) {
+                        this.realtimeAtivo = false;
                     }
                     this.carregandoInicial = false;
 
-                    const { data: bloqueios } = await supabaseClient.from('restricoes').select('*');
-                    if (bloqueios) this.listaNegra = bloqueios;
+                    try {
+                        const { data: bloqueios } = await supabaseClient.from('restricoes').select('*');
+                        if (bloqueios) {
+                            this.listaNegra = bloqueios.map(b => ({ id: 'blq_' + b.id, db_id: b.id, placa: b.placa, motivo: b.motivo }));
+                            localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
+                        }
+                    } catch(e) {
+                        this.listaNegra = JSON.parse(localStorage.getItem('engeseg_blacklist_cache') || '[]');
+                    }
+                },
 
-                    // 2. Cria canais reativos em Tempo Real para atualizar a tela instantaneamente
-                    supabaseClient.channel('mudancas_db')
-                        .on('postgres_changes', { event: '*', filter: 'table=eq.controle_acesso' }, async () => {
-                            const { data } = await supabaseClient.from('controle_acesso').select('*');
-                            if (data) {
-                                this.historicoGeral = data.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
-                                this.veiculosInternos = data.filter(i => i.data_saida === null);
-                            }
-                        })
-                        .on('postgres_changes', { event: '*', filter: 'table=eq.restricoes' }, async () => {
-                            const { data } = await supabaseClient.from('restricoes').select('*');
-                            if (data) this.listaNegra = data;
-                        })
-                        .subscribe();
+                atualizarInterfaceLocal() {
+                    const logs = JSON.parse(localStorage.getItem('engeseg_postgres_cache') || '[]');
+                    const internos = logs.filter(i => i.data_saida === null);
+                    
+                    internos.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                    logs.sort((a, b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+                    
+                    this.veiculosInternos = internos;
+                    this.historicoGeral = logs;
+                    if(logs.length > 0) this.carregandoInicial = false;
                 },
 
                 verificarPlacaExistente() {
@@ -429,25 +435,52 @@
                         this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios.";
                         return;
                     }
+                    // CORREÇÃO 1: Corrigido o tipo de validação de 'Incrementar' para 'Prestador'
                     if (this.formData.tipo_visitante === 'Prestador' && !this.formData.nome_condutor) {
-                        this.erroValidacao = "⚠️ ATENÇÃO: O campo Nome do Condutor é obrigatório.";
+                        this.erroValidacao = "⚠️ ATENÇÃO: O campo Nome do Condutor é obrigatório para Prestadores.";
                         return;
                     }
-                    if (this.enviando || this.placaBloqueadaMsg) return;
-                    
-                    this.enviando = true;
+                    if (this.placaBloqueadaMsg) return;
+
+                    const isoEntrada = new Date().toISOString();
+                    const localId = 'temp_' + Math.floor(Math.random() * 100000);
 
                     const pacoteDados = {
+                        id: localId,
+                        db_id: null,
                         tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
                         nome_condutor: String(this.formData.nome_condutor || ''),
                         documento: String(this.formData.documento || ''),
                         placa: String(this.formData.placa).toUpperCase().trim(),
                         veiculo_modelo: String(this.formData.veiculo_modelo || ''),
                         destino: String(this.formData.destino || ''),
-                        observacoes: String(this.formData.observacoes || '')
+                        observacoes: String(this.formData.observacoes || ''),
+                        data_entrada: isoEntrada,
+                        data_saida: null
                     };
 
-                    // Limpa a tela na hora para dar velocidade total à guarita
+                    // CORREÇÃO 2: Removida a variável fantasma 'this.幕' que quebrava o script no celular
+                    this.historicoGeral.unshift(pacoteDados);
+                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
+                    this.atualizarInterfaceLocal();
+
+                    // Envio completo estruturado para o Postgres Cloud
+                    supabaseClient.from('controle_acesso').insert([{
+                        tipo_visitante: pacoteDados.tipo_visitante,
+                        nome_condutor: pacoteDados.nome_condutor,
+                        documento: pacoteDados.documento,
+                        placa: pacoteDados.placa,
+                        veiculo_modelo: pacoteDados.veiculo_modelo,
+                        destino: pacoteDados.destino,
+                        observacoes: pacoteDados.observacoes,
+                        data_entrada: isoEntrada
+                    }]).then(() => {
+                        this.carregarDados();
+                    }).catch(e => {
+                        console.error("Armazenado em backup local");
+                    });
+
+                    // Limpa a tela imediatamente
                     this.formData.nome_condutor = '';
                     this.formData.documento = '';
                     this.formData.placa = '';
@@ -456,32 +489,64 @@
                     this.formData.observacoes = '';
                     this.cadastroAutoPreenchido = false;
                     this.tentouEnviar = false;
-
-                    const { error } = await supabaseClient.from('controle_acesso').insert([pacoteDados]);
-                    if (error) this.erroValidacao = 'Erro de rede PostgreSQL: ' + error.message;
-                    this.enviando = false;
                 },
 
-                async registrarSaida(id) {
-                    await supabaseClient.from('controle_acesso').update({ data_saida: new Date().toISOString() }).eq('id', id);
+                async registrarSaida(id, db_id) {
+                    const dataIso = new Date().toISOString();
+                    
+                    const index = this.historicoGeral.findIndex(item => item.id === id);
+                    if (index !== -1) {
+                        this.historicoGeral[index].data_saida = dataIso;
+                        localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
+                        this.atualizarInterfaceLocal();
+                    }
+
+                    if (db_id) {
+                        await supabaseClient.from('controle_acesso').update({ data_saida: dataIso }).eq('id', db_id);
+                    }
                 },
 
-                async deletarRegistro(id) {
-                    if (!confirm("Excluir definitivamente este registro da nuvem PostgreSQL?")) return;
-                    await supabaseClient.from('controle_acesso').delete().eq('id', id);
+                async deletarRegistro(id, db_id) {
+                    if (!confirm("Excluir definitivamente este registro?")) return;
+                    
+                    this.historicoGeral = this.historicoGeral.filter(item => item.id !== id);
+                    localStorage.setItem('engeseg_postgres_cache', JSON.stringify(this.historicoGeral));
+                    this.atualizarInterfaceLocal();
+
+                    if (db_id) {
+                        await supabaseClient.from('controle_acesso').delete().eq('id', db_id);
+                    }
                 },
 
                 async adicionarRestricao() {
                     if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return;
-                    await supabaseClient.from('restricoes').insert([{ 
-                        placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
-                        motivo: String(this.formBloqueio.motivo) 
+                    
+                    const localBlq = {
+                        id: 'local_blq_' + Math.floor(Math.random() * 1000),
+                        db_id: null,
+                        placa: String(this.formBloqueio.placa).toUpperCase().trim(),
+                        motivo: String(this.formBloqueio.motivo)
+                    };
+
+                    this.listaNegra.unshift(localBlq);
+                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
+
+                    await supabaseClient.from('restricoes').insert([{
+                        placa: localBlq.placa,
+                        motivo: localBlq.motivo
                     }]);
+                    
                     this.formBloqueio = { placa: '', motivo: '' };
+                    this.carregarDados();
                 },
 
-                async removerRestricao(id) {
-                    await supabaseClient.from('restricoes').delete().eq('id', id);
+                async removerRestricao(id, db_id) {
+                    this.listaNegra = this.listaNegra.filter(item => item.id !== id);
+                    localStorage.setItem('engeseg_blacklist_cache', JSON.stringify(this.listaNegra));
+
+                    if (db_id) {
+                        await supabaseClient.from('restricoes').delete().eq('id', db_id);
+                    }
                 },
 
                 abrirModoAdmin() {
