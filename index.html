@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engeseg Vigilância - Controle de Acessos</title>
-    <!-- Tailwind CSS v3 CDN - Estável -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Biblioteca oficial do Firebase (Versão Compat) via CDN -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Estilização da barra de rolagem customizada */
@@ -24,11 +21,9 @@
       x-data="appPortaria()" 
       x-init="initApp()">
 
-    <!-- Header Principal -->
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-4">
-                <!-- LOGO ENGESEG -->
                 <div class="flex items-center justify-center py-1">
                     <img src="logo-engeseg.png" class="h-16 w-auto object-contain max-w-[180px]" alt="Logo Engeseg Vigilância">
                 </div>
@@ -38,7 +33,6 @@
                 </div>
             </div>
             
-            <!-- Menu de Abas Alternáveis -->
             <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-700 text-sm font-bold">
                 <button @click="abaAtiva = 'portaria'" :class="abaAtiva === 'portaria' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition">Portaria</button>
                 <button @click="abrirModoAdmin()" :class="abaAtiva === 'admin' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 rounded-md transition flex items-center space-x-1">
@@ -48,29 +42,26 @@
 
             <div class="flex items-center space-x-3">
                 <div :class="realtimeAtivo ? 'bg-emerald-500' : 'bg-rose-500'" class="h-2 w-2 rounded-full animate-pulse"></div>
-                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado' : 'Conectando...'"></div>
+                <div class="text-xs font-mono text-slate-400" x-text="realtimeAtivo ? 'Sincronizado Cloud' : 'Conectando...'"></div>
                 <div class="text-sm font-mono text-slate-300 border-l border-slate-700 pl-3 hidden md:block" x-text="horaAtual"></div>
             </div>
         </div>
     </header>
 
-    <!-- TELA DA PORTARIA -->
     <main x-show="abaAtiva === 'portaria'" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 w-full" x-transition>
         
-        <!-- COLUNA ESQUERDA: FORMULÁRIO DE ENTRADA -->
         <section :class="placaBloqueadaMsg ? 'border-rose-500 ring-4 ring-rose-500/20' : 'border-slate-700'" class="lg:col-span-4 bg-slate-800 p-5 rounded-xl border shadow-xl h-fit transition-all duration-300">
             <div class="mb-4 border-b border-slate-700 pb-2">
                 <h2 class="text-lg font-bold text-white">Novo Registro</h2>
                 <span class="text-xs text-slate-400" x-text="cadastroAutoPreenchido ? '✨ Dados recuperados do histórico' : 'Guarita / Entrada'"></span>
             </div>
 
-            <!-- Alerta de Restrição Crítica de Entrada -->
+            <div x-show="erroValidacao" x-transition class="bg-amber-500/20 border border-amber-500 text-amber-300 p-3 rounded-lg text-xs mb-4 font-bold" x-cloak x-text="erroValidacao"></div>
             <div x-show="placaBloqueadaMsg" x-transition class="bg-rose-500/20 border border-rose-500 text-rose-300 p-3 rounded-lg text-xs mb-4 font-medium animate-pulse" x-cloak>
                 ⚠️ <strong>ACESSO BLOQUEADO:</strong> <span x-text="placaBloqueadaMsg"></span>
             </div>
 
             <div class="space-y-4">
-                <!-- Seletor Rápido de Tipo -->
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Tipo de Fluxo</label>
                     <div class="grid grid-cols-3 gap-2">
@@ -88,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Grid de Inputs Placa e Destino -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Placa</label>
@@ -98,7 +88,8 @@
                             placeholder="ABC1D23"
                             x-model="formData.placa"
                             @input="verificarPlacaExistente()"
-                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-center text-lg font-mono font-bold tracking-widest text-white focus:outline-none focus:border-blue-500 uppercase placeholder-slate-600"
+                            :class="tentouEnviar && !formData.placa ? 'border-rose-500 bg-rose-950/20' : 'border-slate-600'"
+                            class="w-full bg-slate-900 border rounded-lg px-3 py-2 text-center text-lg font-mono font-bold tracking-widest text-white focus:outline-none focus:border-blue-500 uppercase placeholder-slate-600"
                         />
                     </div>
                     <div>
@@ -107,12 +98,12 @@
                             type="text"
                             placeholder="Ex: Bloco B / Ap 22"
                             x-model="formData.destino"
-                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
+                            :class="tentouEnviar && !formData.destino ? 'border-rose-500 bg-rose-950/20' : 'border-slate-600'"
+                            class="w-full bg-slate-900 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
                         />
                     </div>
                 </div>
 
-                <!-- Dados Opcionais -->
                 <div class="space-y-3 pt-2 border-t border-slate-700/50">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
@@ -122,7 +113,8 @@
                             type="text"
                             placeholder="Nome completo"
                             x-model="formData.nome_condutor"
-                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
+                            :class="tentouEnviar && formData.tipo_visitante === 'Prestador' && !formData.nome_condutor ? 'border-rose-500 bg-rose-950/20' : 'border-slate-600'"
+                            class="w-full bg-slate-900 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-white placeholder-slate-600"
                         />
                     </div>
 
@@ -170,7 +162,6 @@
             </div>
         </section>
 
-        <!-- COLUNA DIREITA: VEÍCULOS NO PÁTIO -->
         <section class="lg:col-span-8 bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                 <h2 class="text-lg font-bold text-white flex items-center space-x-2">
@@ -213,15 +204,12 @@
         </section>
     </main>
 
-    <!-- MODO ADMINISTRADOR -->
     <main x-show="abaAtiva === 'admin'" class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full" x-transition x-cloak>
-        
         <div class="flex space-x-4 mb-4 border-b border-slate-700 pb-2">
             <button @click="subAbaAdmin = 'historico'" :class="subAbaAdmin === 'historico' ? 'text-blue-400 border-b-2 border-blue-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">📋 Histórico de Auditoria</button>
             <button @click="subAbaAdmin = 'restricoes'" :class="subAbaAdmin === 'restricoes' ? 'text-rose-400 border-b-2 border-rose-400 font-bold' : 'text-slate-400'" class="pb-2 text-sm">🚫 Restrições de Entrada (<span x-text="listaNegra.length">0</span>)</button>
         </div>
 
-        <!-- SUB-ABA HISTÓRICO GERAL -->
         <section x-show="subAbaAdmin === 'historico'" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div>
@@ -277,7 +265,6 @@
             </div>
         </section>
 
-        <!-- SUB-ABA RESTRIÇÕES DE ENTRADA -->
         <section x-show="subAbaAdmin === 'restricoes'" class="grid grid-cols-1 md:grid-cols-12 gap-6" x-transition x-cloak>
             <div class="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 h-fit shadow-xl">
                 <h3 class="text-md font-bold text-white mb-3 uppercase tracking-wider text-rose-400">Bloquear Nova Placa</h3>
@@ -322,7 +309,6 @@
         </section>
     </main>
 
-    <!-- RODAPÉ DE CRÉDITOS CORPORATIVOS -->
     <footer class="bg-slate-800 border-t border-slate-700 py-3.5 px-6 shadow-xl mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-2 font-medium tracking-wide">
             <div class="flex items-center space-x-1.5">
@@ -341,7 +327,6 @@
         </div>
     </footer>
 
-    <!-- Inicialização Estrita e Segura do Firebase SDK -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCzeD6FLlfNOnEnKlzyb25XA7sisU2Llgk",
@@ -352,7 +337,6 @@
             appId: "1:999888889619:web:b65e8d88dec7743aef76e6"
         };
 
-        // Instancia o Firebase de forma estável
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -361,6 +345,7 @@
                 horaAtual: '', agora: new Date(), abaAtiva: 'portaria', subAbaAdmin: 'historico', buscaHistorico: '',
                 veiculosInternos: [], historicoGeral: [], listaNegra: [], carregandoInicial: true,
                 enviando: false, realtimeAtivo: false, cadastroAutoPreenchido: false, placaBloqueadaMsg: '',
+                erroValidacao: '', tentouEnviar: false,
                 formData: { tipo_visitante: 'Motoboy', nome_condutor: '', documento: '', placa: '', veiculo_modelo: '', destino: '', observacoes: '' },
                 formBloqueio: { placa: '', motivo: '' },
 
@@ -371,12 +356,9 @@
                     setInterval(() => { this.agora = new Date(); }, 30000);
                 },
 
-                atualizarRelogio() {
-                    this.horaAtual = new Date().toLocaleTimeString('pt-BR');
-                },
+                atualizarRelogio() { this.horaAtual = new Date().toLocaleTimeString('pt-BR'); },
 
                 carregarDados() {
-                    // Escuta em Tempo Real Nativa da Nuvem do Firebase
                     db.collection("controle_acesso").onSnapshot((snapshot) => {
                         let internos = []; let geral = [];
                         snapshot.forEach((doc) => {
@@ -390,33 +372,41 @@
                         this.historicoGeral = geral;
                         this.carregandoInicial = false;
                         this.realtimeAtivo = true;
-                    }, (err) => {
-                        console.error("Erro na nuvem:", err);
-                        this.realtimeAtivo = false;
+                    }, (err) => { 
+                        console.error("Falha ao sincronizar acessos:", err);
+                        this.realtimeAtivo = false; 
                     });
 
                     db.collection("restricoes").onSnapshot((snapshot) => {
                         let bloqueios = [];
                         snapshot.forEach((doc) => { bloqueios.push({ id: doc.id, ...doc.data() }); });
                         this.listaNegra = bloqueios;
+                    }, (err) => {
+                        console.error("Falha ao sincronizar restrições:", err);
                     });
                 },
 
                 verificarPlacaExistente() {
+                    if (!this.formData.placa) {
+                        this.placaBloqueadaMsg = '';
+                        this.cadastroAutoPreenchido = false;
+                        return;
+                    }
+
                     this.formData.placa = this.formData.placa.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
                     
-                    // Validação em tempo de execução da Lista Negra
-                    const bloqueioAtivo = this.listaNegra.find(item => item.placa === this.formData.placa);
+                    // Valida restrição de placa com tratamento seguro para dados nulos
+                    const bloqueioAtivo = this.listaNegra.find(item => item && item.placa === this.formData.placa);
                     if (bloqueioAtivo) {
-                        this.placaBloqueadaMsg = bloqueioAtivo.motivo;
+                        this.placaBloqueadaMsg = bloqueioAtivo.motivo || 'Acesso Restrito';
                         return;
                     } else { 
                         this.placaBloqueadaMsg = ''; 
                     }
 
-                    // Autopreenchimento por histórico inteligente
-                    if (this.formData.placa.length >= 4) {
-                        const correspondencia = this.historicoGeral.find(item => item.placa === this.formData.placa);
+                    // Autopreenchimento inteligente por histórico protegido contra listas vazias
+                    if (this.formData.placa.length >= 4 && this.historicoGeral.length > 0) {
+                        const correspondencia = this.historicoGeral.find(item => item && item.placa === this.formData.placa);
                         if (correspondencia) {
                             this.formData.nome_condutor = correspondencia.nome_condutor || '';
                             this.formData.documento = correspondencia.documento || '';
@@ -429,12 +419,16 @@
                 },
 
                 async registrarEntrada() {
+                    this.tentouEnviar = true;
+                    this.erroValidacao = '';
+
+                    // Validação de interface
                     if (!this.formData.placa || !this.formData.destino) {
-                        alert("Campos obrigatórios: Placa e Destino precisam ser digitados!");
+                        this.erroValidacao = "⚠️ ATENÇÃO: Os campos PLACA e DESTINO são obrigatórios para confirmar a entrada.";
                         return;
                     }
                     if (this.formData.tipo_visitante === 'Prestador' && !this.formData.nome_condutor) {
-                        alert("Para Prestadores de Serviço, o Nome do Condutor é obrigatório!");
+                        this.erroValidacao = "⚠️ ATENÇÃO: Para Prestadores de Serviço, o campo Nome do Condutor é obrigatório.";
                         return;
                     }
                     if (this.enviando || this.placaBloqueadaMsg) return;
@@ -442,86 +436,74 @@
                     this.enviando = true;
 
                     try {
-                        await db.collection("controle_acesso").add({
-                            tipo_visitante: this.formData.tipo_visitante,
-                            nome_condutor: this.formData.nome_condutor || '',
-                            documento: this.formData.documento || '',
-                            placa: this.formData.placa.toUpperCase().trim(),
-                            veiculo_modelo: this.formData.veiculo_modelo || '',
-                            destino: this.formData.destino,
-                            observacoes: this.formData.observacoes || '',
+                        const payload = {
+                            tipo_visitante: String(this.formData.tipo_visitante || 'Motoboy'),
+                            nome_condutor: String(this.formData.nome_condutor || ''),
+                            documento: String(this.formData.documento || ''),
+                            placa: String(this.formData.placa).toUpperCase().trim(),
+                            veiculo_modelo: String(this.formData.veiculo_modelo || ''),
+                            destino: String(this.formData.destino || ''),
+                            observacoes: String(this.formData.observacoes || ''),
                             data_entrada: new Date().toISOString(),
                             data_saida: null
-                        });
+                        };
 
-                        // Limpeza segura dos estados
-                        this.formData = { tipo_visitante: this.formData.tipo_visitante, nome_condutor: '', documento: '', placa: '', veiculo_modelo: '', destino: '', observacoes: '' };
+                        await db.collection("controle_acesso").add(payload);
+
+                        // Reset assíncrono seguro e imediato do formulário
+                        this.formData.nome_condutor = '';
+                        this.formData.documento = '';
+                        this.formData.placa = '';
+                        this.formData.veiculo_modelo = '';
+                        this.formData.destino = '';
+                        this.formData.observacoes = '';
+                        
                         this.cadastroAutoPreenchido = false;
+                        this.tentouEnviar = false;
                     } catch (err) {
-                        alert('Erro de gravação no Firebase: ' + err.message);
+                        this.erroValidacao = 'Erro de gravação: ' + err.message;
                     } finally {
                         this.enviando = false;
                     }
                 },
 
                 async registrarSaida(id) {
-                    try {
-                        await db.collection("controle_acesso").doc(id).update({ 
-                            data_saida: new Date().toISOString() 
-                        });
-                    } catch (err) { 
-                        alert('Erro ao dar saída: ' + err.message); 
-                    }
+                    try { await db.collection("controle_acesso").doc(id).update({ data_saida: new Date().toISOString() }); } catch (err) {}
                 },
 
                 async deletarRegistro(id) {
                     if (!confirm("Excluir definitivamente este registro do histórico da nuvem?")) return;
-                    try {
-                        await db.collection("controle_acesso").doc(id).delete();
-                    } catch (err) { 
-                        alert('Erro ao apagar: ' + err.message); 
-                    }
+                    try { await db.collection("controle_acesso").doc(id).delete(); } catch (err) {}
                 },
 
                 async adicionarRestricao() {
-                    if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return alert("Preencha Placa e Motivo do bloqueio!");
+                    if (!this.formBloqueio.placa || !this.formBloqueio.motivo) return;
                     try {
-                        await db.collection("restricoes").add({
-                            placa: this.formBloqueio.placa.toUpperCase().trim(),
-                            motivo: this.formBloqueio.motivo
+                        await db.collection("restricoes").add({ 
+                            placa: String(this.formBloqueio.placa).toUpperCase().trim(), 
+                            motivo: String(this.formBloqueio.motivo) 
                         });
                         this.formBloqueio = { placa: '', motivo: '' };
-                    } catch (err) { 
-                        alert('Erro ao registrar restrição: ' + err.message); 
-                    }
+                    } catch (err) {}
                 },
 
                 async removerRestricao(id) {
-                    if (!confirm("Confirmar a liberação e exclusão da restrição desta placa?")) return;
-                    try {
-                        await db.collection("restricoes").doc(id).delete();
-                    } catch (err) { 
-                        alert('Erro ao liberar: ' + err.message); 
-                    }
+                    try { await db.collection("restricoes").doc(id).delete(); } catch (err) {}
                 },
 
                 abrirModoAdmin() {
                     const senha = prompt("Insira a senha de Administrador:");
-                    if (senha !== null && senha.trim() === "20Engeseg26") {
-                        this.abaAtiva = 'admin';
-                    } else if (senha !== null) {
-                        alert("Acesso negado.");
-                    }
+                    if (senha !== null && senha.trim() === "20Engeseg26") this.abaAtiva = 'admin';
                 },
 
                 historicoFiltrado() {
                     if (!this.buscaHistorico.trim()) return this.historicoGeral;
                     const t = this.buscaHistorico.toLowerCase().trim();
-                    return this.historicoGeral.filter(i => {
-                        return (i.placa && i.placa.toLowerCase().includes(t)) || 
-                               (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)) ||
-                               (i.destino && i.destino.toLowerCase().includes(t));
-                    });
+                    return this.historicoGeral.filter(i => 
+                        (i.placa && i.placa.toLowerCase().includes(t)) || 
+                        (i.nome_condutor && i.nome_condutor.toLowerCase().includes(t)) ||
+                        (i.destino && i.destino.toLowerCase().includes(t))
+                    );
                 },
 
                 exportarDados(tipo) {
@@ -535,12 +517,9 @@
 
                     let csv = "data:text/csv;charset=utf-8,\uFEFFFluxo;Placa;Condutor;Documento;Veiculo;Destino;Entrada;Saida\n";
                     filtrados.forEach(i => {
-                        csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.documento || ''};${i.veiculo_modelo || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`;
+                        csv += `${i.tipo_visitante};${i.placa};${i.nome_condutor || ''};${i.destino};${this.formatarData(i.data_entrada)};${i.data_saida ? this.formatarData(i.data_saida) : 'Dentro'}\n`;
                     });
-                    
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodeURI(csv));
-                    link.setAttribute("download", `Engeseg_Relatorio_${tipo}_${new Date().toLocaleDateString('pt-BR')}.csv`);
+                    const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Relatorio_${tipo}.csv`);
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 },
 
@@ -552,28 +531,17 @@
 
                 calcularPermanencia(entrada) {
                     const m = Math.floor((this.agora - new Date(entrada)) / 60000);
-                    if (m < 0) return '0 min';
                     return m < 60 ? `${m} min` : `${Math.floor(m/60)}h ${m%60}m`;
                 },
 
-                obterMinutos(entrada) { 
-                    return Math.floor((this.agora - new Date(entrada)) / 60000); 
-                },
-                
+                obterMinutos(entrada) { return Math.floor((this.agora - new Date(entrada)) / 60000); },
                 obterBordaCard(i) {
                     const m = this.obterMinutos(i.data_entrada);
                     if (i.tipo_visitante === 'Motoboy') return m > 15 ? 'border-rose-500 border-l-8 animate-pulse bg-rose-950/20' : 'border-amber-500';
                     return i.tipo_visitante === 'Uber' && m > 10 ? 'border-rose-500' : 'border-slate-500';
                 },
-                
-                obterBadgeEstilo(t) { 
-                    return t === 'Motoboy' ? 'bg-amber-500/20 text-amber-400' : t === 'Uber' ? 'bg-slate-700 text-slate-300' : 'bg-sky-500/20 text-sky-400'; 
-                },
-                
-                obterCorTimer(i) { 
-                    const m = this.obterMinutos(i.data_entrada); 
-                    return ((i.tipo_visitante === 'Motoboy' && m > 15) || (i.tipo_visitante === 'Uber' && m > 10)) ? 'text-rose-400 font-bold' : 'text-slate-400'; 
-                }
+                obterBadgeEstilo(t) { return t === 'Motoboy' ? 'bg-amber-500/20 text-amber-400' : t === 'Uber' ? 'bg-slate-700 text-slate-300' : 'bg-sky-500/20 text-sky-400'; },
+                obterCorTimer(i) { const m = this.obterMinutos(i.data_entrada); return ((i.tipo_visitante === 'Motoboy' && m > 15) || (i.tipo_visitante === 'Uber' && m > 10)) ? 'text-rose-400 font-bold' : 'text-slate-400'; }
             }
         }
     </script>
